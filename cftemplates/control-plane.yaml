@@ -12,19 +12,6 @@ Parameters:
   RhcosAmi:
     Description: Current Red Hat Enterprise Linux CoreOS AMI to use for bootstrap.
     Type: AWS::EC2::Image::Id
-  AutoRegisterDNS:
-    Default: "yes"
-    AllowedValues:
-    - "yes"
-    - "no"
-    Description: Do you want to invoke DNS etcd registration, which requires Hosted Zone information?
-    Type: String
-  PrivateHostedZoneId:
-    Description: The Route53 private zone ID to register the etcd targets with, such as Z21IXYZABCZ2A4.
-    Type: String
-  PrivateHostedZoneName:
-    Description: The Route53 zone to register the targets with, such as cluster.example.com. Omit the trailing period.
-    Type: String
   Master0Subnet:
     Description: The subnets, recommend private, to launch the master nodes into.
     Type: AWS::EC2::Subnet::Id
@@ -69,22 +56,6 @@ Parameters:
     - "r4.4xlarge"
     - "r4.8xlarge"
     - "r4.16xlarge"
-  AutoRegisterELB:
-    Default: "yes"
-    AllowedValues:
-    - "yes"
-    - "no"
-    Description: Do you want to invoke NLB registration, which requires a Lambda ARN parameter?
-    Type: String
-  RegisterNlbIpTargetsLambdaArn:
-    Description: ARN for NLB IP target registration lambda. Supply the value from the cluster infrastructure or select "no" for AutoRegisterELB.
-    Type: String
-  InternalApiTargetGroupArn:
-    Description: ARN for internal API load balancer target group. Supply the value from the cluster infrastructure or select "no" for AutoRegisterELB.
-    Type: String
-  InternalServiceTargetGroupArn:
-    Description: ARN for internal service load balancer target group. Supply the value from the cluster infrastructure or select "no" for AutoRegisterELB.
-    Type: String
   EbsEncryptionKey:
     Description: KMS Key Alias name for root disk encryption
     Type: String
@@ -128,19 +99,6 @@ Metadata:
       - Master0Subnet
       - Master1Subnet
       - Master2Subnet
-    - Label:
-        default: "DNS"
-      Parameters:
-      - AutoRegisterDNS
-      - PrivateHostedZoneName
-      - PrivateHostedZoneId
-    - Label:
-        default: "Load Balancer Automation"
-      Parameters:
-      - AutoRegisterELB
-      - RegisterNlbIpTargetsLambdaArn
-      - InternalApiTargetGroupArn
-      - InternalServiceTargetGroupArn
     ParameterLabels:
       InfrastructureName:
         default: "Infrastructure Name"
@@ -162,14 +120,6 @@ Metadata:
         default: "Ignition CA String"
       MasterSecurityGroupId:
         default: "Master Security Group ID"
-      AutoRegisterDNS:
-        default: "Use Provided DNS Automation"
-      AutoRegisterELB:
-        default: "Use Provided ELB Automation"
-      PrivateHostedZoneName:
-        default: "Private Hosted Zone Name"
-      PrivateHostedZoneId:
-        default: "Private Hosted Zone ID"
       AWSTagVSAD:
         default: Required AWS tag VSAD
       AWSTagUserid:
@@ -180,10 +130,6 @@ Metadata:
         default: Required AWS tag Name
       AWSTagNoStop:
         default: Required AWS tag NoStop
-
-Conditions:
-  DoRegistration: !Equals ["yes", !Ref AutoRegisterELB]
-  DoDns: !Equals ["yes", !Ref AutoRegisterDNS]
 
 Resources:
   Master0:
@@ -225,22 +171,6 @@ Resources:
       - Key: "nostop"
         Value: !Ref AWSTagNoStop       
 
-  RegisterMaster0InternalApiTarget:
-    Condition: DoRegistration
-    Type: Custom::NLBRegister
-    Properties:
-      ServiceToken: !Ref RegisterNlbIpTargetsLambdaArn
-      TargetArn: !Ref InternalApiTargetGroupArn
-      TargetIp: !GetAtt Master0.PrivateIp
-
-  RegisterMaster0InternalServiceTarget:
-    Condition: DoRegistration
-    Type: Custom::NLBRegister
-    Properties:
-      ServiceToken: !Ref RegisterNlbIpTargetsLambdaArn
-      TargetArn: !Ref InternalServiceTargetGroupArn
-      TargetIp: !GetAtt Master0.PrivateIp
-
   Master1:
     Type: AWS::EC2::Instance
     Properties:
@@ -280,22 +210,6 @@ Resources:
       - Key: "nostop"
         Value: !Ref AWSTagNoStop
 
-  RegisterMaster1InternalApiTarget:
-    Condition: DoRegistration
-    Type: Custom::NLBRegister
-    Properties:
-      ServiceToken: !Ref RegisterNlbIpTargetsLambdaArn
-      TargetArn: !Ref InternalApiTargetGroupArn
-      TargetIp: !GetAtt Master1.PrivateIp
-
-  RegisterMaster1InternalServiceTarget:
-    Condition: DoRegistration
-    Type: Custom::NLBRegister
-    Properties:
-      ServiceToken: !Ref RegisterNlbIpTargetsLambdaArn
-      TargetArn: !Ref InternalServiceTargetGroupArn
-      TargetIp: !GetAtt Master1.PrivateIp
-
   Master2:
     Type: AWS::EC2::Instance
     Properties:
@@ -334,22 +248,6 @@ Resources:
         Value: !Ref AWSTagName
       - Key: "nostop"
         Value: !Ref AWSTagNoStop
-        
-  RegisterMaster2InternalApiTarget:
-    Condition: DoRegistration
-    Type: Custom::NLBRegister
-    Properties:
-      ServiceToken: !Ref RegisterNlbIpTargetsLambdaArn
-      TargetArn: !Ref InternalApiTargetGroupArn
-      TargetIp: !GetAtt Master2.PrivateIp
-
-  RegisterMaster2InternalServiceTarget:
-    Condition: DoRegistration
-    Type: Custom::NLBRegister
-    Properties:
-      ServiceToken: !Ref RegisterNlbIpTargetsLambdaArn
-      TargetArn: !Ref InternalServiceTargetGroupArn
-      TargetIp: !GetAtt Master2.PrivateIp
 
 Outputs:
   PrivateIPs:

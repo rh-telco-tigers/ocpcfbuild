@@ -62,15 +62,6 @@ Parameters:
     - "no"
     Description: Do you want to invoke NLB registration, which requires a Lambda ARN parameter?
     Type: String
-  RegisterNlbIpTargetsLambda:
-    Description: ARN for NLB IP target registration lambda. Supply the value from the cluster infrastructure or select "no" for AutoRegisterELB.
-    Type: String
-  IngressService80TargetGroupArn:
-    Description: ARN for internal API load balancer target group. Supply the value from the cluster infrastructure or select "no" for AutoRegisterELB.
-    Type: String
-  IngressService443TargetGroupArn:
-    Description: ARN for internal service load balancer target group. Supply the value from the cluster infrastructure or select "no" for AutoRegisterELB.
-    Type: String
   EbsEncryptionKey:
     Description: KMS Key Alias name for root disk encryption
     Type: String
@@ -110,13 +101,6 @@ Metadata:
         default: "Network Configuration"
       Parameters:
       - Subnet
-    - Label:
-        default: "Load Balancer Automation"
-      Parameters:
-      - AutoRegisterELB
-      - RegisterNlbIpTargetsLambda
-      - IngressService80TargetGroupArn
-      - IngressService443TargetGroupArn
     ParameterLabels:
       Subnet:
         default: "Subnet"
@@ -142,9 +126,6 @@ Metadata:
         default: Required AWS tag Name
       AWSTagNoStop:
         default: Required AWS tag NoStop
-
-Conditions:
-  DoRegistration: !Equals ["yes", !Ref AutoRegisterELB]
 
 Resources:
   Worker0:
@@ -185,22 +166,6 @@ Resources:
         Value: !Ref AWSTagName
       - Key: "nostop"
         Value: !Ref AWSTagNoStop       
-
-  RegisterWorker0Ingress80Target:
-    Condition: DoRegistration
-    Type: Custom::NLBRegister
-    Properties:
-      ServiceToken: !Ref RegisterNlbIpTargetsLambda
-      TargetArn: !Ref IngressService80TargetGroupArn
-      TargetIp: !GetAtt Worker0.PrivateIp
-
-  RegisterWorker0Ingress443Target:
-    Condition: DoRegistration
-    Type: Custom::NLBRegister
-    Properties:
-      ServiceToken: !Ref RegisterNlbIpTargetsLambda
-      TargetArn: !Ref IngressService443TargetGroupArn
-      TargetIp: !GetAtt Worker0.PrivateIp
 
 Outputs:
   PrivateIP:

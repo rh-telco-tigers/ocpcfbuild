@@ -5,6 +5,7 @@
 <!-- TOC -->
 - [CloudFormation Templates for Building OCP](#cloudformation-templates-for-building-ocp)
   - [Table of Contents](#table-of-contents)
+  - [IMPORTANT](#important)
   - [Introduction](#introduction)
   - [Prerequisites](#prerequisites)
     - [Create Install Config file](#create-install-config-file)
@@ -13,6 +14,13 @@
   - [Additional notes](#additional-notes)
 - [Cleanup](#cleanup)
 <!-- TOC -->
+
+
+## IMPORTANT
+
+THIS REPO CONTAINS NO AUTOMATION AROUND AWS Load Balancer configuration. The "nw_lb.yaml" will create two load balancers, as well as the listeners and target groups, but will NOT add any machines to these endpoints. You will need to manually do this during the install.
+
+
 
 ## Introduction
 
@@ -114,34 +122,40 @@ If you are using an external DNS server you will need to create CNAMES that poin
 16. aws s3 ls s3://cfbuild-dtxlg-infra
 17. update bootstrap.json with new S3 bucket
 18. cd ../cf
-19. update bootstrap.json with the updated ARNs (x3)
-20. update bootstrap.json with the updated SecurityGroups
-21. aws cloudformation create-stack --stack-name cfbuildint-bootstrap \
+19. update bootstrap.json with the updated SecurityGroups
+20. aws cloudformation create-stack --stack-name cfbuildint-bootstrap \
      --template-body file://bootstrap.yaml \
      --parameters file://bootstrap.json
-22. update control_plane.json with the updated ARNs (x3)
-23. update control_plane.json with the updated SecurityGroup
-24. update control_plane.json with the updated IAM Profile
-25. get the certificate authority from the master.ign file
-26. update control_plane.json with the updated certificate authority
-27. get a copy of the master.ign from https://api-int.cfbuild.example.com:22623/config/master
-28. update master.ign version to 3.1.0
-29. upload to s3
-30. aws s3 cp master.ign s3://cfbuild-dtxlg-infra/master.ign --acl public-read
-31. aws cloudformation create-stack --stack-name cfbuildint-controlplane \
+
+**UPDATE the "int" loadbalancer to have the newly created bootstrap node added here**
+
+21. update control_plane.json with the updated SecurityGroup
+22. get the certificate authority from the master.ign file
+23. update control_plane.json with the updated certificate authority
+24. get a copy of the master.ign from https://api-int.cfbuild.example.com:22623/config/master
+25. update master.ign version to 3.1.0
+26. upload to s3
+27. aws s3 cp master.ign s3://cfbuild-dtxlg-infra/master.ign --acl public-read
+28. aws cloudformation create-stack --stack-name cfbuildint-controlplane \
      --template-body file://control-plane.yaml \
      --parameters file://control-plane.json
-32. cd ..
-33. openshift-install wait-for bootstrap-complete --dir=install
-34. aws cloudformation delete-stack --stack-name cfbuildint-bootstrap
-35. get a copy of the master.ign from https://api-int.cfbuild.example.com:22623/config/master
-36. update worker.ign version to 3.1.0
-37. upload to s3
-38. aws s3 cp worker.ign s3://cfbuild-dtxlg-infra/worker.ign --acl public-read
-39. update worker.json with new securtiyGroup ID
-40. update worker.json with new IAM Profile
-41. update CertificateAuthority entry
-42. cd cf
+
+**UPDATE the "int" loadbalancer to have the newly created control plane nodes added here**
+
+29. cd ..
+30. openshift-install wait-for bootstrap-complete --dir=install
+31. aws cloudformation delete-stack --stack-name cfbuildint-bootstrap
+
+**UPDATE the "int" loadbalancer and REMOVE the bootstrap node**
+
+32.  get a copy of the master.ign from https://api-int.cfbuild.example.com:22623/config/master
+33.  update worker.ign version to 3.1.0
+35.  upload to s3
+36.  aws s3 cp worker.ign s3://cfbuild-dtxlg-infra/worker.ign --acl public-read
+37.  update worker.json with new securtiyGroup ID
+38.  update worker.json with new IAM Profile
+39.  update CertificateAuthority entry
+40.  cd cf
 NOTE:  If you want to have your workers on mulitple subnets/AZ be sure to create multiple "worker.json" files and update the subnets for each.
 43. aws cloudformation create-stack --stack-name cfbuildint-worker0 \
      --template-body file://worker.yaml \
@@ -153,6 +167,9 @@ NOTE:  If you want to have your workers on mulitple subnets/AZ be sure to create
      --template-body file://worker.yaml \
      --parameters file://worker.json
 46. cd ..
+
+**UPDATE the "ingress" loadbalancer and ADD the worker nodes created**
+
 47. export KUBECONFIG=$(pwd)/install/auth/kubeconfig
 48. oc get nodes
 49. oc get csr
@@ -177,6 +194,8 @@ If DNS does not work, and we need to update DNS servers from the default supplie
 at step 4 above look at the files in manifest with particular interest around the cluster-dns file and this web page https://docs.openshift.com/container-platform/4.6/networking/dns-operator.html THIS IS UNTESTED DONT USE.
 
 # Cleanup
+
+The following commands will delete your environment ... make sure you really want to do this. You have been warned!
 
 aws cloudformation delete-stack --stack-name cfbuildint-worker0
 aws cloudformation delete-stack --stack-name cfbuildint-worker1

@@ -28,10 +28,6 @@
     "ParameterValue": "s3://cfbuild-dtxlg-infra/bootstrap.ign" 
   },
   {
-    "ParameterKey": "AutoRegisterELB", 
-    "ParameterValue": "yes" 
-  },
-  {
     "ParameterKey": "EbsEncryptionKey", 
     "ParameterValue": "alias/encryptionkey" 
   },
@@ -54,18 +50,6 @@
   {
     "ParameterKey": "AWSTagNoStop", 
     "ParameterValue": "true"  
-  },
-  {
-    "ParameterKey": "RegisterNlbIpTargetsLambdaArn", 
-    "ParameterValue": "arn:aws:lambda:us-east-2:551178754270:function:cfbuildint-nwlb-RegisterNlbIpTargets-14996OWWUR58P" 
-  },
-  {
-    "ParameterKey": "InternalApiTargetGroupArn", 
-    "ParameterValue": "arn:aws:elasticloadbalancing:us-east-2:551178754270:targetgroup/cfbui-Inter-155QVLAOH0MS3/7e6872fbaff94cd5" 
-  },
-  {
-    "ParameterKey": "InternalServiceTargetGroupArn", 
-    "ParameterValue": "arn:aws:elasticloadbalancing:us-east-2:551178754270:targetgroup/cfbui-Inter-3HF1X6845R2F/736c48543b09f6f1" 
   }
 ]
 

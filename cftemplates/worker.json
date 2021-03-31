@@ -28,10 +28,6 @@
     "ParameterValue": "m4.large" 
   },
   {
-    "ParameterKey": "AutoRegisterELB", 
-    "ParameterValue": "yes" 
-  },
-  {
     "ParameterKey": "EbsEncryptionKey", 
     "ParameterValue": "alias/encryptionkey" 
   },
@@ -54,17 +50,5 @@
   {
     "ParameterKey": "AWSTagNoStop", 
     "ParameterValue": "true"  
-  },
-  {
-    "ParameterKey": "RegisterNlbIpTargetsLambda", 
-    "ParameterValue": "arn:aws:lambda:us-east-2:551178754270:function:cfbuildint-nwlb-RegisterNlbIpTargets-14996OWWUR58P" 
-  },
-  {
-    "ParameterKey": "IngressService80TargetGroupArn", 
-    "ParameterValue": "arn:aws:elasticloadbalancing:us-east-2:551178754270:targetgroup/cfbui-Ingre-NHPCZG9YNZ8A/4ce22a61c4ad3ec6" 
-  },
-  {
-    "ParameterKey": "IngressService443TargetGroupArn", 
-    "ParameterValue": "arn:aws:elasticloadbalancing:us-east-2:551178754270:targetgroup/cfbui-Ingre-1ATHG1GHHL5KA/2b0ed696df9b4d50" 
   }
 ]
