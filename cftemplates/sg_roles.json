@@ -1,0 +1,38 @@
+[
+  {
+    "ParameterKey": "InfrastructureName", 
+    "ParameterValue": "cfbuild-dtxlg" 
+  },
+  {
+    "ParameterKey": "VpcCidr", 
+    "ParameterValue": "172.29.0.0/16" 
+  },
+  {
+    "ParameterKey": "PrivateSubnets", 
+    "ParameterValue": "subnet-0655610aa6217f120" 
+  },
+  {
+    "ParameterKey": "VpcId", 
+    "ParameterValue": "vpc-026c4e9f12adc018d" 
+  },
+  {
+    "ParameterKey": "AWSTagVSAD", 
+    "ParameterValue": "D4VV"  
+  },
+  {
+    "ParameterKey": "AWSTagUserid", 
+    "ParameterValue": "<username>"  
+  },
+  {
+    "ParameterKey": "AWSTagRole", 
+    "ParameterValue": "App"  
+  },
+  {
+    "ParameterKey": "AWSTagName", 
+    "ParameterValue": "OpenShift-Resource"  
+  },
+  {
+    "ParameterKey": "AWSTagNoStop", 
+    "ParameterValue": "true"  
+  }
+]

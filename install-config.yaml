@@ -1,0 +1,27 @@
+apiVersion: v1
+baseDomain: <baseDomainName> 
+controlPlane: 
+  hyperthreading: Enabled   
+  name: master
+  replicas: 3
+compute: 
+- hyperthreading: Enabled 
+  name: worker
+  replicas: 0
+metadata:
+  name: cfbuild
+networking:
+  clusterNetwork:
+  - cidr: 10.128.0.0/14
+    hostPrefix: 23
+  machineNetwork:
+  - cidr: 172.29.4.0/23 
+  networkType: OpenShiftSDN
+  serviceNetwork:
+  - 172.30.0.0/16
+platform:
+  none: {}
+publish: Internal
+pullSecret: <pullSecret>
+fips: false 
+sshKey:  <sshPublicKey>

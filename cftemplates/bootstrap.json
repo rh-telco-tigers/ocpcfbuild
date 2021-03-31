@@ -1,0 +1,71 @@
+[
+  {
+    "ParameterKey": "InfrastructureName", 
+    "ParameterValue": "cfbuild-dtxlg" 
+  },
+  {
+    "ParameterKey": "RhcosAmi", 
+    "ParameterValue": "ami-0346f64579665ce3c" 
+  },
+  {
+    "ParameterKey": "AllowedBootstrapSshCidr", 
+    "ParameterValue": "0.0.0.0/0" 
+  },
+  {
+    "ParameterKey": "PrivateSubnet", 
+    "ParameterValue": "subnet-0655610aa6217f120" 
+  },
+  {
+    "ParameterKey": "MasterSecurityGroupId", 
+    "ParameterValue": "sg-046a469122fff3637" 
+  },
+  {
+    "ParameterKey": "VpcId", 
+    "ParameterValue": "vpc-026c4e9f12adc018d" 
+  },
+  {
+    "ParameterKey": "BootstrapIgnitionLocation", 
+    "ParameterValue": "s3://cfbuild-dtxlg-infra/bootstrap.ign" 
+  },
+  {
+    "ParameterKey": "AutoRegisterELB", 
+    "ParameterValue": "yes" 
+  },
+  {
+    "ParameterKey": "EbsEncryptionKey", 
+    "ParameterValue": "alias/encryptionkey" 
+  },
+  {
+    "ParameterKey": "AWSTagVSAD", 
+    "ParameterValue": "D4VV"  
+  },
+  {
+    "ParameterKey": "AWSTagUserid", 
+    "ParameterValue": "<username>"  
+  },
+  {
+    "ParameterKey": "AWSTagRole", 
+    "ParameterValue": "App"  
+  },
+  {
+    "ParameterKey": "AWSTagName", 
+    "ParameterValue": "OpenShift-Resource"  
+  },
+  {
+    "ParameterKey": "AWSTagNoStop", 
+    "ParameterValue": "true"  
+  },
+  {
+    "ParameterKey": "RegisterNlbIpTargetsLambdaArn", 
+    "ParameterValue": "arn:aws:lambda:us-east-2:551178754270:function:cfbuildint-nwlb-RegisterNlbIpTargets-14996OWWUR58P" 
+  },
+  {
+    "ParameterKey": "InternalApiTargetGroupArn", 
+    "ParameterValue": "arn:aws:elasticloadbalancing:us-east-2:551178754270:targetgroup/cfbui-Inter-155QVLAOH0MS3/7e6872fbaff94cd5" 
+  },
+  {
+    "ParameterKey": "InternalServiceTargetGroupArn", 
+    "ParameterValue": "arn:aws:elasticloadbalancing:us-east-2:551178754270:targetgroup/cfbui-Inter-3HF1X6845R2F/736c48543b09f6f1" 
+  }
+]
+
