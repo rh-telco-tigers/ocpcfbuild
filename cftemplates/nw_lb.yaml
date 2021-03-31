@@ -280,9 +280,6 @@ Outputs:
   InternalApiLoadBalancerName:
     Description: Full name of the internal API load balancer.
     Value: !GetAtt IntApiElb.LoadBalancerFullName
-  RegisterNlbIpTargetsLambda:
-    Description: Lambda ARN useful to help register or deregister IP targets for these load balancers.
-    Value: !GetAtt RegisterNlbIpTargets.Arn
   InternalApiTargetGroupArn:
     Description: ARN of the internal API target group.
     Value: !Ref InternalApiTargetGroup
