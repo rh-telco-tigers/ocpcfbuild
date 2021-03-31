@@ -48,8 +48,7 @@ Leveraging the `install-config.yaml` template in the root directory of this repo
 Review the "networking" section and ensure that the IP address ranges do not conflict in your network. You will also need to update networking.machineNetwork.cidr to match the network you are deploying your machines on.
 
 *Proxy Config*
-If we need to use Proxy - which means we are going to need to configure to use proxy including getting the SSL certificate that signed the proxy
-
+If you need to use Proxy to access outside resources, we will need to update the install-config.yaml file with a proxy section as listed below: 
 Add the following to the install-config.yaml
 
 ```
@@ -75,19 +74,28 @@ Copy the signing cert into the TrustBundle Above
 2. openshift-install create manifests --dir=install
 3. vi install/manifests/cluster-scheduler-02-config.yml
    1. update schedulable to false
-4. openshift-install create ignition-configs --dir=install
-5. jq -r .infraID install/metadata.json
+4. edit both `install/manifests/cluster-ingress-02-config.yml` and `cluster-ingress-default-ingresscontroller.yaml`
+   1. update endpointPublishingStrategy to be "HostNetwork" 
+   BE SURE TO NOT MODIFY YOUR "domain:" entry
+```
+spec:
+  domain: apps.cfbuild.example.com
+  endpointPublishingStrategy:
+    type: HostNetwork
+```
+5. openshift-install create ignition-configs --dir=install
+6. jq -r .infraID install/metadata.json
    1. update the following files with the cluster name: bootstrap.json(x2), control-plane.json, nw_lb.json, sg_roles.json, worker.json
    2. update step 16 to 18 below with new cluster name in S3 bucket creation step
-6. validate settings in nw_lb.json
+7. validate settings in nw_lb.json
    1. this should not change for RH testing
-7.  cd cf
-8.  export AWS_DEFAULT_OUTPUT="text"
-9.  aws cloudformation create-stack --stack-name cfbuildint-nwlb \
+8.  cd cf
+9.  export AWS_DEFAULT_OUTPUT="text"
+10. aws cloudformation create-stack --stack-name cfbuildint-nwlb \
      --template-body file://nw_lb.yaml \
      --parameters file://nw_lb.json \
      --capabilities CAPABILITY_NAMED_IAM
-10. aws cloudformation describe-stacks --stack-name cfbuildint-nwlb
+11. aws cloudformation describe-stacks --stack-name cfbuildint-nwlb
 
 -------- External DNS Steps ---------
 If you are using an external DNS server you will need to create CNAMES that point to the AWS LB instances that were created
@@ -134,6 +142,7 @@ If you are using an external DNS server you will need to create CNAMES that poin
 40. update worker.json with new IAM Profile
 41. update CertificateAuthority entry
 42. cd cf
+NOTE:  If you want to have your workers on mulitple subnets/AZ be sure to create multiple "worker.json" files and update the subnets for each.
 43. aws cloudformation create-stack --stack-name cfbuildint-worker0 \
      --template-body file://worker.yaml \
      --parameters file://worker.json
@@ -148,7 +157,8 @@ If you are using an external DNS server you will need to create CNAMES that poin
 48. oc get nodes
 49. oc get csr
 50. oc adm certificate approve <csr_name>
-51. openshift-install wait-for install-complete --dir=install
+51. repeat steps 45 and 50 again (you will need to approve certs 2x for each worker node)
+52. openshift-install wait-for install-complete --dir=install
 
 
 Access Console from:
@@ -163,6 +173,8 @@ It is possible to build using cached copies of the boot info:
     "ParameterValue": "s3://cfbuild-dtxlg-infra/worker.ign" 
   },
 
+If DNS does not work, and we need to update DNS servers from the default supplied by AWS, it may be possible to update this at the very beginning.
+at step 4 above look at the files in manifest with particular interest around the cluster-dns file and this web page https://docs.openshift.com/container-platform/4.6/networking/dns-operator.html THIS IS UNTESTED DONT USE.
 
 # Cleanup
 
