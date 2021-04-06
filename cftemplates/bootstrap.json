@@ -28,6 +28,10 @@
     "ParameterValue": "s3://cfbuild-dtxlg-infra/bootstrap.ign" 
   },
   {
+    "ParameterKey": "IamInstanceProfile", 
+    "ParameterValue": "<IamInstanceProfile>" 
+  },
+  {
     "ParameterKey": "EbsEncryptionKey", 
     "ParameterValue": "alias/encryptionkey" 
   },

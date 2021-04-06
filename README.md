@@ -99,10 +99,9 @@ spec:
    1. this should not change for RH testing
 8.  cd cf
 9.  export AWS_DEFAULT_OUTPUT="text"
-10. aws cloudformation create-stack --stack-name cfbuildint-nwlb \
-     --template-body file://nw_lb.yaml \
-     --parameters file://nw_lb.json \
-     --capabilities CAPABILITY_NAMED_IAM
+10. aws cloudformation create-stack --stack-name cfbuildint-nwlb /\
+     --template-body file://nw_lb.yaml /\
+     --parameters file://nw_lb.json /\
 11. aws cloudformation describe-stacks --stack-name cfbuildint-nwlb
 
 -------- External DNS Steps ---------
@@ -112,8 +111,8 @@ If you are using an external DNS server you will need to create CNAMES that poin
 ----------------------------
 
 
-11. aws cloudformation create-stack --stack-name cfbuildint-sgroles \
-     --template-body file://sg_roles.yaml \
+11. aws cloudformation create-stack --stack-name cfbuildint-sgroles /\
+     --template-body file://sg_roles.yaml /\
      --parameters file://sg_roles.json
 12. aws cloudformation describe-stacks --stack-name cfbuildint-sgroles
 13. cd ../install
@@ -123,8 +122,8 @@ If you are using an external DNS server you will need to create CNAMES that poin
 17. update bootstrap.json with new S3 bucket
 18. cd ../cf
 19. update bootstrap.json with the updated SecurityGroups
-20. aws cloudformation create-stack --stack-name cfbuildint-bootstrap \
-     --template-body file://bootstrap.yaml \
+20. aws cloudformation create-stack --stack-name cfbuildint-bootstrap /\
+     --template-body file://bootstrap.yaml /\
      --parameters file://bootstrap.json
 
 **UPDATE the "int" loadbalancer to have the newly created bootstrap node added here**
@@ -136,8 +135,8 @@ If you are using an external DNS server you will need to create CNAMES that poin
 25. update master.ign version to 3.1.0
 26. upload to s3
 27. aws s3 cp master.ign s3://cfbuild-dtxlg-infra/master.ign --acl public-read
-28. aws cloudformation create-stack --stack-name cfbuildint-controlplane \
-     --template-body file://control-plane.yaml \
+28. aws cloudformation create-stack --stack-name cfbuildint-controlplane /\
+     --template-body file://control-plane.yaml /\
      --parameters file://control-plane.json
 
 **UPDATE the "int" loadbalancer to have the newly created control plane nodes added here**
@@ -157,14 +156,14 @@ If you are using an external DNS server you will need to create CNAMES that poin
 39.  update CertificateAuthority entry
 40.  cd cf
 NOTE:  If you want to have your workers on mulitple subnets/AZ be sure to create multiple "worker.json" files and update the subnets for each.
-43. aws cloudformation create-stack --stack-name cfbuildint-worker0 \
-     --template-body file://worker.yaml \
+43. aws cloudformation create-stack --stack-name cfbuildint-worker0 /\
+     --template-body file://worker.yaml /\
      --parameters file://worker.json
-44. aws cloudformation create-stack --stack-name cfbuildint-worker1 \
-     --template-body file://worker.yaml \
+44. aws cloudformation create-stack --stack-name cfbuildint-worker1 /\
+     --template-body file://worker.yaml /\
      --parameters file://worker.json
-45. aws cloudformation create-stack --stack-name cfbuildint-worker2 \
-     --template-body file://worker.yaml \
+45. aws cloudformation create-stack --stack-name cfbuildint-worker2 /\
+     --template-body file://worker.yaml /\
      --parameters file://worker.json
 46. cd ..
 
