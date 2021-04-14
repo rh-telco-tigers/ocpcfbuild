@@ -11,7 +11,6 @@
   - [Installing Your Cluster](#installing-your-cluster)
     - [Create Install Config file](#create-install-config-file)
     - [Install Steps](#install-steps)
-  - [Additional notes](#additional-notes)
   - [Adding Additional Nodes to your cluster](#adding-additional-nodes-to-your-cluster)
   - [Cleanup](#cleanup)
 <!-- TOC -->
@@ -101,7 +100,6 @@ spec:
    1. update the following files with the cluster name: bootstrap.json(x2), control-plane.json, nw_lb.json, sg_roles.json, worker.json
    2. update step 16 to 18 below with new cluster name in S3 bucket creation step
 7. validate settings in nw_lb.json
-   1. this should not change for RH testing
 8.  run the following commands:
 ```
 $ cd cf
@@ -117,84 +115,85 @@ If you are using an external DNS server you will need to create CNAMES that poin
   * use the "int" LB and point to both api and api-int
   * use the "ingress" LB and point to *.apps.
 
-1.  Create the security groups with
- `aws cloudformation create-stack --stack-name cfbuildint-sgroles \
+9.  Create the security groups with
+```
+$ aws cloudformation create-stack --stack-name cfbuildint-sgroles \
      --template-body file://sg_roles.yaml \
      --parameters file://sg_roles.json`
-12. run `aws cloudformation describe-stacks --stack-name cfbuildint-sgroles`
-13. cd ../install
-14. aws s3 mb s3://cfbuild-2dpcg-infra
-15. aws s3 cp bootstrap.ign s3://cfbuild-2dpcg-infra/bootstrap.ign --acl public-read
-16. aws s3 ls s3://cfbuild-2dpcg-infra
-17. update bootstrap.json with new S3 bucket
-18. cd ../cf
-19. update bootstrap.json with the updated SecurityGroups
-20. aws cloudformation create-stack --stack-name cfbuildint-bootstrap \
+```
+10. run `aws cloudformation describe-stacks --stack-name cfbuildint-sgroles`
+11. Create place the bootstrap ignition file somewhere it can be accessed by the bootstrap node:
+```
+$ cd ../install
+$ aws s3 mb s3://cfbuild-2dpcg-infra
+$ aws s3 cp bootstrap.ign s3://cfbuild-2dpcg-infra/bootstrap.ign --acl public-read
+$ aws s3 ls s3://cfbuild-2dpcg-infra
+```
+12. update bootstrap.json with new S3 bucket
+13. run `cd ../cftemplates`
+14. update bootstrap.json with the updated SecurityGroups
+15. run the following command to create the bootstrap node:
+```
+aws cloudformation create-stack --stack-name cfbuildint-bootstrap \
      --template-body file://bootstrap.yaml \
      --parameters file://bootstrap.json
+```
+**Manually UPDATE the "int" loadbalancer to have the newly created bootstrap node added here**
 
-**UPDATE the "int" loadbalancer to have the newly created bootstrap node added here**
-
-21. update control_plane.json with the updated SecurityGroup
-22. get the certificate authority from the master.ign file
-23. update control_plane.json with the updated certificate authority
-24. aws cloudformation create-stack --stack-name cfbuildint-controlplane /\
+16. update control_plane.json with the updated SecurityGroup
+17. get the certificate authority from the master.ign file
+18. update control_plane.json with the updated certificate authority
+19. run the following command to create the control-plane:
+```
+aws cloudformation create-stack --stack-name cfbuildint-controlplane /\
      --template-body file://control-plane.yaml /\
      --parameters file://control-plane.json
+```
 
-**UPDATE the "int" loadbalancer to have the newly created control plane nodes added here**
+**Manually UPDATE the "int" loadbalancer to have the newly created control plane nodes added here**
 
-29. cd ..
-30. openshift-install wait-for bootstrap-complete --dir=install
-31. aws cloudformation delete-stack --stack-name cfbuildint-bootstrap
+20. run `cd ..`
+21. run the following command to watch the initial bootstrap
+`openshift-install wait-for bootstrap-complete --dir=install`
+22. When the initial install is complete run the following command to delete the bootstrap node:
+`aws cloudformation delete-stack --stack-name cfbuildint-bootstrap`
 
-**UPDATE the "int" loadbalancer and REMOVE the bootstrap node**
+**Manually UPDATE the "int" loadbalancer and REMOVE the bootstrap node**
 
-32.  update worker.json with new securtiyGroup ID
-33.  update worker.json with new IAM Profile
-34.  update CertificateAuthority entry
-35.  cd cf
+23. update worker.json with new securtiyGroup ID
+24. update worker.json with new IAM Profile
+25. update CertificateAuthority entry
+26. run `cd cftemplates`
 NOTE:  If you want to have your workers on mulitple subnets/AZ be sure to create multiple "worker.json" files and update the subnets for each.
-36.  aws cloudformation create-stack --stack-name cfbuildint-worker0 /\
+27.  Create as many worker nodes as you will require for your cluster. Note that you must create a MINIMUM of three worker nodes:
+```
+$ aws cloudformation create-stack --stack-name cfbuildint-worker0 /\
      --template-body file://worker.yaml /\
      --parameters file://worker.json
-37.  aws cloudformation create-stack --stack-name cfbuildint-worker1 /\
+$ aws cloudformation create-stack --stack-name cfbuildint-worker1 /\
      --template-body file://worker.yaml /\
      --parameters file://worker.json
-38.  aws cloudformation create-stack --stack-name cfbuildint-worker2 /\
+$ aws cloudformation create-stack --stack-name cfbuildint-worker2 /\
      --template-body file://worker.yaml /\
      --parameters file://worker.json
-39.  cd ..
+```
+28. run `cd ..`
 
-**UPDATE the "ingress" loadbalancer and ADD the worker nodes created**
+**Manually UPDATE the "ingress" loadbalancer and ADD the worker nodes created**
 
-40. export KUBECONFIG=$(pwd)/install/auth/kubeconfig
-41. oc get nodes
-42. oc get csr
-43. oc adm certificate approve <csr_name>
-44. repeat steps 45 and 50 again (you will need to approve certs 2x for each worker node)
-45. openshift-install wait-for install-complete --dir=install
-
+29. run `export KUBECONFIG=$(pwd)/install/auth/kubeconfig`
+30. run `oc get nodes`
+31. run `oc get csr`
+32. run `oc adm certificate approve <csr_name>`
+33. repeat steps 45 and 50 again (you will need to approve certs 2x for each worker node)
+34. run `openshift-install wait-for install-complete --dir=install`
 
 Access Console from:
 console-openshift-console.apps.cfbuild.example.com
 
-## Additional notes
-
-It is possible to build using cached copies of the boot info:
-
-{
-    "ParameterKey": "IgnitionLocation", 
-    "ParameterValue": "s3://cfbuild-2dpcg-infra/worker.ign" 
-  },
-
-If DNS does not work, and we need to update DNS servers from the default supplied by AWS, it may be possible to update this at the very beginning.
-at step 4 above look at the files in manifest with particular interest around the cluster-dns file and this web page https://docs.openshift.com/container-platform/4.6/networking/dns-operator.html THIS IS UNTESTED DONT USE.
-
-
 ## Adding Additional Nodes to your cluster
 
-When building your cluster in the above described manner you can add additional worker nodes up to 24 hours later. At that time, OpenShift rotates it's primary signing key and the default process to add worker nodes will not work. You will need to follow a few additional steps in order to add additional worker nodes after the 24 hour mark.
+When building your cluster in the above described manner you can add additional worker nodes up to the cluster using your existing cftemplates/worker.json file for up to 24 hours. After 24 hours, the machineConfig controller creates a new signing certificate and any NEW EC2 instance created will no longer trust the cluster for initial build.  In order to add additional worker nodes to your cluster after the 24 hour mark, you will need to follow a few additional steps to get the new signing certificate and add it to your existing configuration files.  **NOTE** These steps assume that you have your original "worker.json" file from when you first built your cluster. If you do not, you will need to follow the steps in the [Install Steps](#install-steps) above to re-create your worker.json file.
 
 First step is to get the new machineConfig signing certificate:
 
