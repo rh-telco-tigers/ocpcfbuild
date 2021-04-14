@@ -8,11 +8,12 @@
   - [IMPORTANT](#important)
   - [Introduction](#introduction)
   - [Prerequisites](#prerequisites)
+  - [Installing Your Cluster](#installing-your-cluster)
     - [Create Install Config file](#create-install-config-file)
-  - [Install Steps](#install-steps)
-  - [* use the "ingress" LB and point to *.apps.](#-use-the-ingress-lb-and-point-to-apps)
+    - [Install Steps](#install-steps)
   - [Additional notes](#additional-notes)
-- [Cleanup](#cleanup)
+  - [Adding Additional Nodes to your cluster](#adding-additional-nodes-to-your-cluster)
+  - [Cleanup](#cleanup)
 <!-- TOC -->
 
 
@@ -45,6 +46,8 @@ You will need the following information in order to proceed with this install pr
 * Base Domain name - This is something like example.com
 * Cluster Name - This would be the cluster name you are building and will be used to create the fully qualified domain name eg. cfbuild.example.com
 
+## Installing Your Cluster
+
 ### Create Install Config file
 
 Leveraging the `install-config.yaml` template in the root directory of this repo, update the following fields:
@@ -70,19 +73,21 @@ additionalTrustBundle: |
     -----END CERTIFICATE-----
 ```
 
+If your proxy has a self signed certificate, you will need to get a copy of that certificate and add it to the "additionalTrustBundle" section called out above.
+
 To get the CA trust bundle run:
 
-openssl s_client -connect -showcerts <proxy name:port> 
+`openssl s_client -connect -showcerts <proxy name:port>`
 
 Copy the signing cert into the TrustBundle Above
 
-## Install Steps
+### Install Steps
 
-1. mkdir install && cp install-config.yaml install
-2. openshift-install create manifests --dir=install
-3. vi install/manifests/cluster-scheduler-02-config.yml
+1. run `mkdir install && cp install-config.yaml install`
+2. run `openshift-install create manifests --dir=install`
+3. run `vi install/manifests/cluster-scheduler-02-config.yml`
    1. update schedulable to false
-4. edit both `install/manifests/cluster-ingress-02-config.yml` and `cluster-ingress-default-ingresscontroller.yaml`
+4. edit both `install/manifests/cluster-ingress-02-config.yml` and `install/manifests/cluster-ingress-default-ingresscontroller.yaml`
    1. update endpointPublishingStrategy to be "HostNetwork" 
    BE SURE TO NOT MODIFY YOUR "domain:" entry
 ```
@@ -91,39 +96,41 @@ spec:
   endpointPublishingStrategy:
     type: HostNetwork
 ```
-5. openshift-install create ignition-configs --dir=install
-6. jq -r .infraID install/metadata.json
+5. run `openshift-install create ignition-configs --dir=install`
+6. run `jq -r .infraID install/metadata.json`
    1. update the following files with the cluster name: bootstrap.json(x2), control-plane.json, nw_lb.json, sg_roles.json, worker.json
    2. update step 16 to 18 below with new cluster name in S3 bucket creation step
 7. validate settings in nw_lb.json
    1. this should not change for RH testing
-8.  cd cf
-9.  export AWS_DEFAULT_OUTPUT="text"
-10. aws cloudformation create-stack --stack-name cfbuildint-nwlb /\
-     --template-body file://nw_lb.yaml /\
-     --parameters file://nw_lb.json /\
-11. aws cloudformation describe-stacks --stack-name cfbuildint-nwlb
+8.  run the following commands:
+```
+$ cd cf
+$ export AWS_DEFAULT_OUTPUT="text"
+$ aws cloudformation create-stack --stack-name cfbuildint-nwlb \
+     --template-body file://nw_lb.yaml \
+     --parameters file://nw_lb.json 
+$ aws cloudformation describe-stacks --stack-name cfbuildint-nwlb
+```
 
--------- External DNS Steps ---------
+**External DNS Steps**
 If you are using an external DNS server you will need to create CNAMES that point to the AWS LB instances that were created
-* use the "int" LB and point to both api and api-int
-* use the "ingress" LB and point to *.apps.
-----------------------------
+  * use the "int" LB and point to both api and api-int
+  * use the "ingress" LB and point to *.apps.
 
-
-11. aws cloudformation create-stack --stack-name cfbuildint-sgroles /\
-     --template-body file://sg_roles.yaml /\
-     --parameters file://sg_roles.json
-12. aws cloudformation describe-stacks --stack-name cfbuildint-sgroles
+1.  Create the security groups with
+ `aws cloudformation create-stack --stack-name cfbuildint-sgroles \
+     --template-body file://sg_roles.yaml \
+     --parameters file://sg_roles.json`
+12. run `aws cloudformation describe-stacks --stack-name cfbuildint-sgroles`
 13. cd ../install
-14. aws s3 mb s3://cfbuild-dtxlg-infra
-15. aws s3 cp bootstrap.ign s3://cfbuild-dtxlg-infra/bootstrap.ign --acl public-read
-16. aws s3 ls s3://cfbuild-dtxlg-infra
+14. aws s3 mb s3://cfbuild-2dpcg-infra
+15. aws s3 cp bootstrap.ign s3://cfbuild-2dpcg-infra/bootstrap.ign --acl public-read
+16. aws s3 ls s3://cfbuild-2dpcg-infra
 17. update bootstrap.json with new S3 bucket
 18. cd ../cf
 19. update bootstrap.json with the updated SecurityGroups
-20. aws cloudformation create-stack --stack-name cfbuildint-bootstrap /\
-     --template-body file://bootstrap.yaml /\
+20. aws cloudformation create-stack --stack-name cfbuildint-bootstrap \
+     --template-body file://bootstrap.yaml \
      --parameters file://bootstrap.json
 
 **UPDATE the "int" loadbalancer to have the newly created bootstrap node added here**
@@ -131,11 +138,7 @@ If you are using an external DNS server you will need to create CNAMES that poin
 21. update control_plane.json with the updated SecurityGroup
 22. get the certificate authority from the master.ign file
 23. update control_plane.json with the updated certificate authority
-24. get a copy of the master.ign from https://api-int.cfbuild.example.com:22623/config/master
-25. update master.ign version to 3.1.0
-26. upload to s3
-27. aws s3 cp master.ign s3://cfbuild-dtxlg-infra/master.ign --acl public-read
-28. aws cloudformation create-stack --stack-name cfbuildint-controlplane /\
+24. aws cloudformation create-stack --stack-name cfbuildint-controlplane /\
      --template-body file://control-plane.yaml /\
      --parameters file://control-plane.json
 
@@ -147,34 +150,30 @@ If you are using an external DNS server you will need to create CNAMES that poin
 
 **UPDATE the "int" loadbalancer and REMOVE the bootstrap node**
 
-32.  get a copy of the master.ign from https://api-int.cfbuild.example.com:22623/config/master
-33.  update worker.ign version to 3.1.0
-35.  upload to s3
-36.  aws s3 cp worker.ign s3://cfbuild-dtxlg-infra/worker.ign --acl public-read
-37.  update worker.json with new securtiyGroup ID
-38.  update worker.json with new IAM Profile
-39.  update CertificateAuthority entry
-40.  cd cf
+32.  update worker.json with new securtiyGroup ID
+33.  update worker.json with new IAM Profile
+34.  update CertificateAuthority entry
+35.  cd cf
 NOTE:  If you want to have your workers on mulitple subnets/AZ be sure to create multiple "worker.json" files and update the subnets for each.
-43. aws cloudformation create-stack --stack-name cfbuildint-worker0 /\
+36.  aws cloudformation create-stack --stack-name cfbuildint-worker0 /\
      --template-body file://worker.yaml /\
      --parameters file://worker.json
-44. aws cloudformation create-stack --stack-name cfbuildint-worker1 /\
+37.  aws cloudformation create-stack --stack-name cfbuildint-worker1 /\
      --template-body file://worker.yaml /\
      --parameters file://worker.json
-45. aws cloudformation create-stack --stack-name cfbuildint-worker2 /\
+38.  aws cloudformation create-stack --stack-name cfbuildint-worker2 /\
      --template-body file://worker.yaml /\
      --parameters file://worker.json
-46. cd ..
+39.  cd ..
 
 **UPDATE the "ingress" loadbalancer and ADD the worker nodes created**
 
-47. export KUBECONFIG=$(pwd)/install/auth/kubeconfig
-48. oc get nodes
-49. oc get csr
-50. oc adm certificate approve <csr_name>
-51. repeat steps 45 and 50 again (you will need to approve certs 2x for each worker node)
-52. openshift-install wait-for install-complete --dir=install
+40. export KUBECONFIG=$(pwd)/install/auth/kubeconfig
+41. oc get nodes
+42. oc get csr
+43. oc adm certificate approve <csr_name>
+44. repeat steps 45 and 50 again (you will need to approve certs 2x for each worker node)
+45. openshift-install wait-for install-complete --dir=install
 
 
 Access Console from:
@@ -186,13 +185,48 @@ It is possible to build using cached copies of the boot info:
 
 {
     "ParameterKey": "IgnitionLocation", 
-    "ParameterValue": "s3://cfbuild-dtxlg-infra/worker.ign" 
+    "ParameterValue": "s3://cfbuild-2dpcg-infra/worker.ign" 
   },
 
 If DNS does not work, and we need to update DNS servers from the default supplied by AWS, it may be possible to update this at the very beginning.
 at step 4 above look at the files in manifest with particular interest around the cluster-dns file and this web page https://docs.openshift.com/container-platform/4.6/networking/dns-operator.html THIS IS UNTESTED DONT USE.
 
-# Cleanup
+
+## Adding Additional Nodes to your cluster
+
+When building your cluster in the above described manner you can add additional worker nodes up to 24 hours later. At that time, OpenShift rotates it's primary signing key and the default process to add worker nodes will not work. You will need to follow a few additional steps in order to add additional worker nodes after the 24 hour mark.
+
+First step is to get the new machineConfig signing certificate:
+
+1. get the value of "IgnitionLocation" from the cftemplates/worker.json file.
+2. run the following command updating the export command with the hostname and port from step one
+```
+$ export MCS=api-int.clusterDomain:22623
+$ echo "q" | openssl s_client -connect $MCS  -showcerts | awk '/-----BEGIN CERTIFICATE-----/,/-----END CERTIFICATE-----/' | base64 --wrap=0 > ./api-int.base64
+$ cat api-int.base64
+```
+3. update your cftemplates/worker.json file with the output from step 2. specifically you will want to update the base64 encoded string for "CertificateAuthorities"
+```
+},
+  {
+    "ParameterKey": "CertificateAuthorities", 
+    "ParameterValue": "data:text/plain;charset=utf-8;base64,<insert update string here>" 
+  },
+```
+4. Run the following command to create one or more additional nodes (be sure to update the stack name to something that has not been used):
+```
+aws cloudformation create-stack --stack-name <new stack name> \
+     --template-body file://worker.yaml \
+     --parameters file://worker.json
+```
+5. You can repeat step #4 as many times as you want to add additional worker nodes to your cluster
+6. log into your cluster with a user with cluster admin access
+7. oc get csr 
+8. oc adm certificate approve <csr_name>
+9. repeat steps 7 and 8 again (you will need to approve certs 2x for each worker node you add)
+
+
+## Cleanup
 
 The following commands will delete your environment ... make sure you really want to do this. You have been warned!
 
