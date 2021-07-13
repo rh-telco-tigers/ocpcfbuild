@@ -15,16 +15,13 @@
   - [Cleanup](#cleanup)
 <!-- TOC -->
 
-
 ## IMPORTANT
 
 THIS REPO CONTAINS NO AUTOMATION AROUND AWS Load Balancer configuration. The "nw_lb.yaml" will create two load balancers, as well as the listeners and target groups, but will NOT add any machines to these endpoints. You will need to manually do this during the install.
 
-
-
 ## Introduction
 
-The following repo documents a process for creating an OpenShift Cluster in AWS on a private VPC minimizing the amount of permissions required to create the cluster. This will create an operational cluster, however it will *NOT* have many of the AWS integrations that are available with the standard IPI install process. This is also a very manual process, and will require editing multiple files to complete. Be sure to have a good editor handy.
+The following repo documents a process for creating an OpenShift Cluster in AWS on a private VPC minimizing the amount of permissions required to create the cluster. This will create an operational cluster, however it will *NOT* have many of the AWS integrations that are available with the standard IPI install process. This install leverages only one AWS subnet, and thus should not be used for production workloads. This is also a very manual process, and will require editing multiple files to complete. Be sure to have a good editor handy.
 
 ## Prerequisites
 
@@ -39,11 +36,13 @@ You will need the following information in order to proceed with this install pr
 * SSH Public Key - 
 * RHCOS AMI - https://docs.openshift.com/container-platform/4.6/installing/installing_aws/installing-aws-user-infra.html#installation-aws-user-infra-rhcos-ami_installing-aws-user-infra
 * AWS VPC ID - this will look something like "vpc-026c4e9f12adc018d"
-* AWS Private Subnet ID(s) - this will look something like "subnet-0655610aa6217f120". You may have multiple of these which will help with HA.
+* AWS Private Subnet ID - this will look something like "subnet-0655610aa6217f120".
 * EBS Encryption Key - This is used to encrypt the boot disk at build time. This will look something like "alias/encryptionkeyname"
 * AWS Tags - Review the template json and yaml for AWS resource tags that may apply.
 * Base Domain name - This is something like example.com
 * Cluster Name - This would be the cluster name you are building and will be used to create the fully qualified domain name eg. cfbuild.example.com
+* S3 Bucket OR a separate web server that supports https with a valid signed certificate that can host the bootstrap.ign file
+* AWS credentials, or an AWS ec2 instance with the appropriate roles assigned for the creation of EC2 instances, as well as load balancers and security groups
 
 ## Installing Your Cluster
 
