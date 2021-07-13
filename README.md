@@ -110,10 +110,10 @@ $ aws cloudformation create-stack --stack-name cfbuildint-nwlb \
 $ aws cloudformation describe-stacks --stack-name cfbuildint-nwlb
 ```
 
-**External DNS Steps**
-If you are using an external DNS server you will need to create CNAMES that point to the AWS LB instances that were created
-  * use the "int" LB and point to both api and api-int
-  * use the "ingress" LB and point to *.apps.
+>**External DNS Steps**
+>If you are using an external DNS server you will need to create CNAMES that point to the AWS LB instances that were created
+>  * use the "int" LB and point to both api and api-int
+>  * use the "ingress" LB and point to *.apps.
 
 9.  Create the security groups with
 ```
@@ -130,6 +130,12 @@ $ aws s3 cp bootstrap.ign s3://cfbuild-2dpcg-infra/bootstrap.ign --acl public-re
 $ aws s3 ls s3://cfbuild-2dpcg-infra
 ```
 12. update bootstrap.json with new S3 bucket
+
+> **NOTE**
+> If you are unable to use S3 buckets for storing the bootstrap.ign file, you can host the file on a web server instead. The webserver _MUST_ support HTTPS and 
+> the SSL Certificate _MUST_ be signed by a trusted CA for the bootstrap process to proceed. Be sure to update the "BootstrapIgnitionLocation" in the bootstrap.json file 
+> with the proper URL to access the bootstrap.ign file (eg. "https://someserver.somedomain.com/bootstrap.ign" ).
+
 13. run `cd ../cftemplates`
 14. update bootstrap.json with the updated SecurityGroups
 15. run the following command to create the bootstrap node:
