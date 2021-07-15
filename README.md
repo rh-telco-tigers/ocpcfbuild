@@ -8,6 +8,7 @@
   - [IMPORTANT](#important)
   - [Introduction](#introduction)
   - [Prerequisites](#prerequisites)
+    - [DNS Requirements](#dns-requirements)
   - [Installing Your Cluster](#installing-your-cluster)
     - [Create Install Config file](#create-install-config-file)
     - [Install Steps](#install-steps)
@@ -43,6 +44,16 @@ You will need the following information in order to proceed with this install pr
 * Cluster Name - This would be the cluster name you are building and will be used to create the fully qualified domain name eg. cfbuild.example.com
 * S3 Bucket OR a separate web server that supports https with a valid signed certificate that can host the bootstrap.ign file
 * AWS credentials, or an AWS ec2 instance with the appropriate roles assigned for the creation of EC2 instances, as well as load balancers and security groups
+
+### DNS Requirements
+
+You will need three DNS entries for your cluster:
+
+1. api.\<clustername\>.\<basename\>
+2. api-int.\<clustername\>.\<basename\>
+3. *.apps.\<clustername\>.\<basename\>
+
+Where \<clustername\> is the name of your OpenShift cluster such as "ocp47", and \<basename\> is the base domain name such as "test.example.com". The entries for "api." and "api-int." will both point to one Network LoadBalancer that we will create later, and the "*.apps." will point to the second network load balancer. 
 
 ## Installing Your Cluster
 
