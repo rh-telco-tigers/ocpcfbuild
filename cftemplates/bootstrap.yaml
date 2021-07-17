@@ -31,9 +31,6 @@ Parameters:
     Default: s3://my-s3-bucket/bootstrap.ign
     Description: Ignition config file location.
     Type: String
-  IamInstanceProfile:
-    Default: none
-    Type: String
   EbsEncryptionKey:
     Description: KMS Key Alias name for root disk encryption
     Type: String
@@ -98,8 +95,6 @@ Metadata:
         default: Required AWS tag Name
       AWSTagNoStop:
         default: Required AWS tag NoStop
-      IamInstanceProfile:
-        default: IAMINSTANCE
 
 Resources:
 
@@ -134,7 +129,6 @@ Resources:
     Properties:
       ImageId: !Ref RhcosAmi
       InstanceType: "i3.large"
-      IamInstanceProfile: !Ref "IamInstanceProfile"
       BlockDeviceMappings:
       - DeviceName: /dev/xvda
         Ebs:

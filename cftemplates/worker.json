@@ -1,11 +1,11 @@
 [
   {
     "ParameterKey": "InfrastructureName", 
-    "ParameterValue": "cfbuild-dtxlg" 
+    "ParameterValue": "cfbuild-7z724" 
   },
   {
     "ParameterKey": "RhcosAmi", 
-    "ParameterValue": "ami-0346f64579665ce3c" 
+    "ParameterValue": "ami-0c84b5c5255ec4777" 
   },
   {
     "ParameterKey": "Subnet", 
@@ -17,11 +17,7 @@
   },
   {
     "ParameterKey": "IgnitionLocation", 
-    "ParameterValue": "https://api-int.cfbuild.example.com:22623/config/worker" 
-  },
-  {
-    "ParameterKey": "IamInstanceProfile", 
-    "ParameterValue": "<IamInstanceProfile>" 
+    "ParameterValue": "https://api-int.cfbuild.aws3.xphyrlab.net:22623/config/worker" 
   },
   {
     "ParameterKey": "CertificateAuthorities", 

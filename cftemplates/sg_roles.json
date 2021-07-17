@@ -1,7 +1,7 @@
 [
   {
     "ParameterKey": "InfrastructureName", 
-    "ParameterValue": "cfbuild-dtxlg" 
+    "ParameterValue": "cfbuild-7z724" 
   },
   {
     "ParameterKey": "VpcCidr", 

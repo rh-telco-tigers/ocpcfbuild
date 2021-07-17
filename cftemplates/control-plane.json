@@ -1,19 +1,11 @@
 [
   {
     "ParameterKey": "InfrastructureName", 
-    "ParameterValue": "cfbuild-dtxlg" 
+    "ParameterValue": "cfbuild-7z724" 
   },
   {
     "ParameterKey": "RhcosAmi", 
-    "ParameterValue": "ami-0346f64579665ce3c" 
-  },
-  {
-    "ParameterKey": "PrivateHostedZoneId", 
-    "ParameterValue": "Z07467971NJD2UFD9DO16" 
-  },
-  {
-    "ParameterKey": "PrivateHostedZoneName", 
-    "ParameterValue": "cfbuild.example.com" 
+    "ParameterValue": "ami-0c84b5c5255ec4777" 
   },
   {
     "ParameterKey": "Master0Subnet", 
@@ -34,10 +26,6 @@
   {
     "ParameterKey": "IgnitionLocation", 
     "ParameterValue": "https://api-int.cfbuild.example.com:22623/config/master" 
-  },
-  {
-    "ParameterKey": "IamInstanceProfile", 
-    "ParameterValue": "<IamInstanceProfile>" 
   },
   {
     "ParameterKey": "CertificateAuthorities", 

@@ -99,17 +99,29 @@ Copy the signing cert into the TrustBundle Above
 4. edit both `install/manifests/cluster-ingress-02-config.yml` and `install/manifests/cluster-ingress-default-ingresscontroller.yaml`
    1. update endpointPublishingStrategy to be "HostNetwork" 
    BE SURE TO NOT MODIFY YOUR "domain:" entry
+
+cluster-ingress-02-config.yaml
 ```
 spec:
   domain: apps.cfbuild.example.com
   endpointPublishingStrategy:
     type: HostNetwork
 ```
+
+cluster-ingress-default-ingresscontroller.yaml
+```
+spec:
+  endpointPublishingStrategy:
+    loadBalancer:
+      scope: Internal
+    type: HostNetwork
+```
+
 5. run `openshift-install create ignition-configs --dir=install`
 6. run `jq -r .infraID install/metadata.json`
    1. update the following files with the cluster name: bootstrap.json(x2), control-plane.json, nw_lb.json, sg_roles.json, worker.json
-   2. update step 16 to 18 below with new cluster name in S3 bucket creation step
-7. validate settings in nw_lb.json
+   2. update step 11 below with new cluster name in S3 bucket creation step
+7. validate settings in nw_lb.json ensuring you update all placeholders
 8.  run the following commands:
 ```
 $ cd cf
@@ -125,25 +137,25 @@ $ aws cloudformation describe-stacks --stack-name cfbuildint-nwlb
 >  * use the "int" LB and point to both api and api-int
 >  * use the "ingress" LB and point to *.apps.
 
-9.  Create the security groups with
+9.  Update sg_roles.json with appropriate values then create the security groups with
 ```
 $ aws cloudformation create-stack --stack-name cfbuildint-sgroles \
      --template-body file://sg_roles.yaml \
-     --parameters file://sg_roles.json`
+     --parameters file://sg_roles.json
 ```
 10. run `aws cloudformation describe-stacks --stack-name cfbuildint-sgroles`
-11. Create place the bootstrap ignition file somewhere it can be accessed by the bootstrap node:
+11. Place the bootstrap ignition file somewhere it can be accessed by the bootstrap node:
 ```
 $ cd ../install
-$ aws s3 mb s3://cfbuild-2dpcg-infra
-$ aws s3 cp bootstrap.ign s3://cfbuild-2dpcg-infra/bootstrap.ign --acl public-read
-$ aws s3 ls s3://cfbuild-2dpcg-infra
+$ aws s3 mb s3://cfbuild-7z724-infra
+$ aws s3 cp bootstrap.ign s3://cfbuild-7z724-infra/bootstrap.ign --acl public-read
+$ aws s3 ls s3://cfbuild-7z724-infra
 ```
 12. update bootstrap.json with new S3 bucket
 
 > **NOTE**
-> If you are unable to use S3 buckets for storing the bootstrap.ign file, you can host the file on a web server instead. The webserver _MUST_ support HTTPS and 
-> the SSL Certificate _MUST_ be signed by a trusted CA for the bootstrap process to proceed. Be sure to update the "BootstrapIgnitionLocation" in the bootstrap.json file 
+> If you are unable to use S3 buckets for storing the bootstrap.ign file, you can host the file on a web server instead. The webserver _MUST_ support HTTPS and
+> the SSL Certificate _MUST_ be signed by a trusted CA for the bootstrap process to proceed. Be sure to update the "BootstrapIgnitionLocation" in the bootstrap.json file
 > with the proper URL to access the bootstrap.ign file (eg. "https://someserver.somedomain.com/bootstrap.ign" ).
 
 13. run `cd ../cftemplates`
@@ -155,21 +167,28 @@ aws cloudformation create-stack --stack-name cfbuildint-bootstrap \
      --parameters file://bootstrap.json
 ```
 **Manually UPDATE the "int" loadbalancer to have the newly created bootstrap node added here**
+     a. from AWS Console, select EC2->Load Balancers->Target Groups
+     b. find your int 6443 target, add the bootstrap node ip address
+     c. find your int 22623 target, add the bootstrap node ip address
 
-16. update control_plane.json with the updated SecurityGroup
-17. get the certificate authority from the master.ign file
-18. update control_plane.json with the updated certificate authority
-19. run the following command to create the control-plane:
+1.  update control_plane.json with the updated SecurityGroup
+2.  get the certificate authority from the master.ign file
+3.  update control_plane.json with the updated certificate authority
+4.  update control_plane.json with the updated IgnitionLocation
+5.  run the following command to create the control-plane:
 ```
-aws cloudformation create-stack --stack-name cfbuildint-controlplane /\
-     --template-body file://control-plane.yaml /\
+aws cloudformation create-stack --stack-name cfbuildint-controlplane \
+     --template-body file://control-plane.yaml \
      --parameters file://control-plane.json
 ```
 
 **Manually UPDATE the "int" loadbalancer to have the newly created control plane nodes added here**
+     a. from AWS Console, select EC2->Load Balancers->Target Groups
+     b. find your int 6443 target, add the three new control plane nodes ip addresses
+     c. find your int 22623 target, add the three new control plane nodes ip addresses
 
-20. run `cd ..`
-21. run the following command to watch the initial bootstrap
+1.  run `cd ..`
+2.  run the following command to watch the initial bootstrap
 `openshift-install wait-for bootstrap-complete --dir=install`
 22. When the initial install is complete run the following command to delete the bootstrap node:
 `aws cloudformation delete-stack --stack-name cfbuildint-bootstrap`
@@ -177,20 +196,20 @@ aws cloudformation create-stack --stack-name cfbuildint-controlplane /\
 **Manually UPDATE the "int" loadbalancer and REMOVE the bootstrap node**
 
 23. update worker.json with new securtiyGroup ID
-24. update worker.json with new IAM Profile
-25. update CertificateAuthority entry
+24. update CertificateAuthority entry
+25. update IgnitionLocation entry
 26. run `cd cftemplates`
 NOTE:  If you want to have your workers on mulitple subnets/AZ be sure to create multiple "worker.json" files and update the subnets for each.
 27.  Create as many worker nodes as you will require for your cluster. Note that you must create a MINIMUM of three worker nodes:
 ```
-$ aws cloudformation create-stack --stack-name cfbuildint-worker0 /\
-     --template-body file://worker.yaml /\
+$ aws cloudformation create-stack --stack-name cfbuildint-worker0 \
+     --template-body file://worker.yaml \
      --parameters file://worker.json
-$ aws cloudformation create-stack --stack-name cfbuildint-worker1 /\
-     --template-body file://worker.yaml /\
+$ aws cloudformation create-stack --stack-name cfbuildint-worker1 \
+     --template-body file://worker.yaml \
      --parameters file://worker.json
-$ aws cloudformation create-stack --stack-name cfbuildint-worker2 /\
-     --template-body file://worker.yaml /\
+$ aws cloudformation create-stack --stack-name cfbuildint-worker2 \
+     --template-body file://worker.yaml \
      --parameters file://worker.json
 ```
 28. run `cd ..`
@@ -250,3 +269,5 @@ aws cloudformation delete-stack --stack-name cfbuildint-worker1
 aws cloudformation delete-stack --stack-name cfbuildint-worker2
 aws cloudformation delete-stack --stack-name cfbuildint-controlplane
 aws cloudformation delete-stack --stack-name cfbuildint-bootstrap
+aws cloudformation delete-stack --stack-name cfbuildint-sgroles
+aws cloudformation delete-stack --stack-name cfbuildint-nwlb

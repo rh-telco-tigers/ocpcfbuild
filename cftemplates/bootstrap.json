@@ -1,11 +1,11 @@
 [
   {
     "ParameterKey": "InfrastructureName", 
-    "ParameterValue": "cfbuild-dtxlg" 
+    "ParameterValue": "cfbuild-7z724" 
   },
   {
     "ParameterKey": "RhcosAmi", 
-    "ParameterValue": "ami-0346f64579665ce3c" 
+    "ParameterValue": "ami-0c84b5c5255ec4777" 
   },
   {
     "ParameterKey": "AllowedBootstrapSshCidr", 
@@ -25,11 +25,7 @@
   },
   {
     "ParameterKey": "BootstrapIgnitionLocation", 
-    "ParameterValue": "s3://cfbuild-dtxlg-infra/bootstrap.ign" 
-  },
-  {
-    "ParameterKey": "IamInstanceProfile", 
-    "ParameterValue": "<IamInstanceProfile>" 
+    "ParameterValue": "s3://cfbuild-7z724-infra/bootstrap.ign" 
   },
   {
     "ParameterKey": "EbsEncryptionKey", 

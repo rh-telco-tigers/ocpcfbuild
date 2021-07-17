@@ -28,9 +28,6 @@ Parameters:
     Default: https://api-int.$CLUSTER_NAME.$DOMAIN:22623/config/master
     Description: Ignition config file location.
     Type: String
-  IamInstanceProfile:
-    Default: none
-    Type: String
   CertificateAuthorities:
     Default: data:text/plain;charset=utf-8;base64,ABC...xYz==
     Description: Base64 encoded certificate authority string to use.
@@ -133,15 +130,12 @@ Metadata:
         default: Required AWS tag Name
       AWSTagNoStop:
         default: Required AWS tag NoStop
-      IamInstanceProfile:
-        default: IAMINSTANCE
 
 Resources:
   Master0:
     Type: AWS::EC2::Instance
     Properties:
       ImageId: !Ref RhcosAmi
-      IamInstanceProfile: !Ref "IamInstanceProfile"
       BlockDeviceMappings:
       - DeviceName: /dev/xvda
         Ebs:
@@ -181,7 +175,6 @@ Resources:
     Type: AWS::EC2::Instance
     Properties:
       ImageId: !Ref RhcosAmi
-      IamInstanceProfile: !Ref "IamInstanceProfile"
       BlockDeviceMappings:
       - DeviceName: /dev/xvda
         Ebs:
@@ -221,7 +214,6 @@ Resources:
     Type: AWS::EC2::Instance
     Properties:
       ImageId: !Ref RhcosAmi
-      IamInstanceProfile: !Ref "IamInstanceProfile"
       BlockDeviceMappings:
       - DeviceName: /dev/xvda
         Ebs:
