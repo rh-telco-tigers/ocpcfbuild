@@ -22,6 +22,6 @@ networking:
 platform:
   none: {}
 publish: Internal
-pullSecret: <pullSecret>
+pullSecret: '<pullSecret>'
 fips: false 
 sshKey:  <sshPublicKey>
