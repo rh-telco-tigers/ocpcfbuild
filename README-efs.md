@@ -164,7 +164,7 @@ spec:
 ```
 13.  oc create -f provisioner-deployment.yaml
 14.  oc get pods
-15.  oc logs /<nfs provisioner pod/>
+15.  oc logs \/<nfs provisioner pod\/>
 16.  set storageclass as default `oc patch storageclass aws-efs -p '{"metadata": {"annotations":{"storageclass.kubernetes.io/is-default-class":"true"}}}'`
 17.  oc new-project test-efs
 18.  vi testpvc.yaml
