@@ -86,7 +86,7 @@ If your proxy has a self signed certificate, you will need to get a copy of that
 
 To get the CA trust bundle run:
 
-`openssl s_client -connect -showcerts <proxy name:port>`
+`openssl s_client -connect -showcerts \<proxy name:port\>`
 
 Copy the signing cert into the TrustBundle Above
 
@@ -147,9 +147,9 @@ $ aws cloudformation create-stack --stack-name cfbuildint-sgroles \
 11. Place the bootstrap ignition file somewhere it can be accessed by the bootstrap node:
 ```
 $ cd ../install
-$ aws s3 mb s3://cfbuild-7z724-infra
-$ aws s3 cp bootstrap.ign s3://cfbuild-7z724-infra/bootstrap.ign --acl public-read
-$ aws s3 ls s3://cfbuild-7z724-infra
+$ aws s3 mb s3://cfbuild-qjddd-infra
+$ aws s3 cp bootstrap.ign s3://cfbuild-qjddd-infra/bootstrap.ign --acl public-read
+$ aws s3 ls s3://cfbuild-qjddd-infra
 ```
 12. update bootstrap.json with new S3 bucket
 
