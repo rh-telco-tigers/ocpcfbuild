@@ -34,7 +34,7 @@ You will need the following software to follow this install process:
 
 You will need the following information in order to proceed with this install process:
 * OpenShift Pull Secret - https://cloud.redhat.com/openshift/install/pull-secret
-* SSH Public Key - 
+* SSH Public Key - https://docs.openshift.com/container-platform/4.6/installing/installing_aws/installing-aws-default.html#ssh-agent-using_installing-aws-default
 * RHCOS AMI - https://docs.openshift.com/container-platform/4.6/installing/installing_aws/installing-aws-user-infra.html#installation-aws-user-infra-rhcos-ami_installing-aws-user-infra
 * AWS VPC ID - this will look something like "vpc-026c4e9f12adc018d"
 * AWS Private Subnet ID - this will look something like "subnet-0655610aa6217f120".
@@ -124,7 +124,7 @@ spec:
 7. validate settings in nw_lb.json ensuring you update all placeholders
 8.  run the following commands:
 ```
-$ cd cf
+$ cd cftemplates
 $ export AWS_DEFAULT_OUTPUT="text"
 $ aws cloudformation create-stack --stack-name cfbuildint-nwlb \
      --template-body file://nw_lb.yaml \
@@ -171,10 +171,10 @@ aws cloudformation create-stack --stack-name cfbuildint-bootstrap \
      b. find your int 6443 target, add the bootstrap node ip address
      c. find your int 22623 target, add the bootstrap node ip address
 
-1.  update control_plane.json with the updated SecurityGroup
+1.  update control-plane.json with the updated SecurityGroup
 2.  get the certificate authority from the master.ign file
-3.  update control_plane.json with the updated certificate authority
-4.  update control_plane.json with the updated IgnitionLocation
+3.  update control-plane.json with the updated certificate authority
+4.  update control-plane.json with the updated IgnitionLocation
 5.  run the following command to create the control-plane:
 ```
 aws cloudformation create-stack --stack-name cfbuildint-controlplane \
