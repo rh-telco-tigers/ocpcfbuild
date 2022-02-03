@@ -1,0 +1,170 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: Template for OpenShift Cluster Node Launch (EC2 master instances) used for replacement of failed nodes
+
+Parameters:
+  InfrastructureName:
+    AllowedPattern: ^([a-zA-Z][a-zA-Z0-9\-]{0,26})$
+    MaxLength: 27
+    MinLength: 1
+    ConstraintDescription: Infrastructure name must be alphanumeric, start with a letter, and have a maximum of 27 characters.
+    Description: A short, unique cluster ID used to tag nodes for the kubelet cloud provider.
+    Type: String
+  RhcosAmi:
+    Description: Current Red Hat Enterprise Linux CoreOS AMI to use for bootstrap.
+    Type: AWS::EC2::Image::Id
+  Master0Subnet:
+    Description: The subnets, recommend private, to launch the master nodes into.
+    Type: AWS::EC2::Subnet::Id
+  MasterSecurityGroupId:
+    Description: The master security group ID to associate with master nodes.
+    Type: AWS::EC2::SecurityGroup::Id
+  IgnitionLocation:
+    Default: https://api-int.$CLUSTER_NAME.$DOMAIN:22623/config/master
+    Description: Ignition config file location.
+    Type: String
+  CertificateAuthorities:
+    Default: data:text/plain;charset=utf-8;base64,ABC...xYz==
+    Description: Base64 encoded certificate authority string to use.
+    Type: String
+  MasterInstanceType:
+    Default: m5.xlarge
+    Type: String
+    AllowedValues:
+    - "m4.xlarge"
+    - "m4.2xlarge"
+    - "m4.4xlarge"
+    - "m4.8xlarge"
+    - "m4.10xlarge"
+    - "m4.16xlarge"
+    - "m5.xlarge"
+    - "m5.2xlarge"
+    - "m5.4xlarge"
+    - "m5.8xlarge"
+    - "m5.10xlarge"
+    - "m5.16xlarge"
+    - "c4.2xlarge"
+    - "c4.4xlarge"
+    - "c4.8xlarge"
+    - "r4.xlarge"
+    - "r4.2xlarge"
+    - "r4.4xlarge"
+    - "r4.8xlarge"
+    - "r4.16xlarge"
+  EbsEncryptionKey:
+    Description: KMS Key Alias name for root disk encryption
+    Type: String
+  AWSTagVSAD:
+    Description: Required AWS tag
+    Type: String
+  AWSTagUserid:
+    Description: Required AWS tag
+    Type: String
+  AWSTagRole:
+    Description: Required AWS tag
+    Type: String
+  AWSTagName:
+    Description: Required AWS tag
+    Type: String
+  AWSTagNoStop:
+    Description: Required AWS tag
+    Type: String
+    Default: "true"
+
+Metadata:
+  AWS::CloudFormation::Interface:
+    ParameterGroups:
+    - Label:
+        default: "Cluster Information"
+      Parameters:
+      - InfrastructureName
+    - Label:
+        default: "Host Information"
+      Parameters:
+      - MasterInstanceType
+      - RhcosAmi
+      - IgnitionLocation
+      - CertificateAuthorities
+      - MasterSecurityGroupId
+    - Label:
+        default: "Network Configuration"
+      Parameters:
+      - VpcId
+      - AllowedBootstrapSshCidr
+      - Master0Subnet
+    ParameterLabels:
+      InfrastructureName:
+        default: "Infrastructure Name"
+      VpcId:
+        default: "VPC ID"
+      Master0Subnet:
+        default: "Master-0 Subnet"
+      MasterInstanceType:
+        default: "Master Instance Type"
+      RhcosAmi:
+        default: "Red Hat Enterprise Linux CoreOS AMI ID"
+      BootstrapIgnitionLocation:
+        default: "Master Ignition Source"
+      CertificateAuthorities:
+        default: "Ignition CA String"
+      MasterSecurityGroupId:
+        default: "Master Security Group ID"
+      AWSTagVSAD:
+        default: Required AWS tag VSAD
+      AWSTagUserid:
+        default: Required AWS tag Userid
+      AWSTagRole:
+        default: Required AWS tag Role
+      AWSTagName:
+        default: Required AWS tag Name
+      AWSTagNoStop:
+        default: Required AWS tag NoStop
+
+Resources:
+  Master0:
+  Type: AWS::EC2::Instance
+  Properties:
+    ImageId: !Ref RhcosAmi
+    # IamInstanceProfile: “VzPol-profile-NonProd-SharedServices-dev-CZWV-ec2”
+    BlockDeviceMappings:
+    - DeviceName: /dev/xvda
+      Ebs:
+        VolumeSize: "120"
+        VolumeType: "gp2"
+        Encrypted: "true"
+        KmsKeyId: !Ref EbsEncryptionKey
+    InstanceType: !Ref MasterInstanceType
+    NetworkInterfaces:
+    - AssociatePublicIpAddress: "false"
+      DeviceIndex: "0"
+      GroupSet:
+      - !Ref "MasterSecurityGroupId"
+      SubnetId: !Ref "Master0Subnet"
+    UserData:
+      Fn::Base64: !Sub
+      - '{"ignition":{"config":{"merge":[{"source":"${SOURCE}"}]},"security":{"tls":{"certificateAuthorities":[{"source":"${CA_BUNDLE}"}]}},"version":"3.1.0"}}'
+      - {
+        SOURCE: !Ref IgnitionLocation,
+        CA_BUNDLE: !Ref CertificateAuthorities,
+      }
+    Tags:
+    - Key: !Join ["", ["kubernetes.io/cluster/", !Ref InfrastructureName]]
+      Value: "shared"
+    - Key: "VSAD"
+      Value: !Ref AWSTagVSAD
+    - Key: "Userid"
+      Value: !Ref AWSTagUserid
+    - Key: "Role"
+      Value: !Ref AWSTagRole
+    - Key: "Name"
+      Value: !Ref AWSTagName
+    - Key: "nostop"
+      Value: !Ref AWSTagNoStop  
+
+Outputs:
+  PrivateIPs:
+    Description: The control-plane node private IP addresses.
+    Value:
+      !Join [
+        ",",
+        [!GetAtt Master0.PrivateIp]
+      ]

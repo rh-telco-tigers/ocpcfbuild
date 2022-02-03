@@ -1,0 +1,58 @@
+[
+    {
+      "ParameterKey": "InfrastructureName", 
+      "ParameterValue": "aws48-tr757" 
+    },
+    {
+      "ParameterKey": "RhcosAmi", 
+      "ParameterValue": "ami-00b3a5054da356288" 
+    },
+    {
+      "ParameterKey": "Master0Subnet", 
+      "ParameterValue": "subnet-0cd66e41ddd65baa4" 
+    },
+    {
+      "ParameterKey": "MasterSecurityGroupId", 
+      "ParameterValue": "sg-0aca1474ccf1f0ce3" 
+    },
+    {
+      "ParameterKey": "IgnitionLocation", 
+      "ParameterValue": "https://api-int.aws48.sandbox39.opentlc.com:22623/config/master" 
+    },
+    {
+      "ParameterKey": "CertificateAuthorities", 
+      "ParameterValue": "data:text/plain;charset=utf-8;base64,LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSURFRENDQWZpZ0F3SUJBZ0lJSGhndGNVMkNPWmN3RFFZSktvWklodmNOQVFFTEJRQXdKakVTTUJBR0ExVUUKQ3hNSmIzQmxibk5vYVdaME1SQXdEZ1lEVlFRREV3ZHliMjkwTFdOaE1CNFhEVEl5TURFek1USXhNemd4T1ZvWApEVE15TURFeU9USXhNemd4T1Zvd0pqRVNNQkFHQTFVRUN4TUpiM0JsYm5Ob2FXWjBNUkF3RGdZRFZRUURFd2R5CmIyOTBMV05oTUlJQklqQU5CZ2txaGtpRzl3MEJBUUVGQUFPQ0FROEFNSUlCQ2dLQ0FRRUFzOXlOYkF5d1VLREcKRmhtb0E5aWlVV1dKN3JaZ1BtV1B4RERMcFVFcG4wbDkzcE1veXRIZjMvbnJHLzI2eTYycGRtZ3kzYjJ1T3pPNgovYW5TUVdoMVlwZmYxZjM4UHQvSzVLZDhkTHdlWXkzRFJIMzVoaC8vV0RyRGRCU0R3TTh5NmpJM0ZJZHZzVkt4CkhOOSt2VS9LMlNsTnM0T0VLRldORVdIVmFVUmJHeFlEa0pUM1l0QkNkQzhacjhMV1FxZThqa2QrWVRvS1h1Z0QKYXhlWVliRitEQjlzTFdOdi85VGF0dlA4Y2xLK1hQN3p6YW5WWjA4Mm15V09nVE1CMHNkVngzTVJYNUVQMmFLQQprdVo5TVZGbDVUbHpob2hvK1lwVFJJcERVTEN4YlM2N3VGaUxnMXJNZlJOZXM4cUlJYnNLL29IeHBJLzhxYng4ClpkdHF5UHB6YndJREFRQUJvMEl3UURBT0JnTlZIUThCQWY4RUJBTUNBcVF3RHdZRFZSMFRBUUgvQkFVd0F3RUIKL3pBZEJnTlZIUTRFRmdRVWhjK0JrcFAwRG91YjdPUjhkaFZaN00vUXhha3dEUVlKS29aSWh2Y05BUUVMQlFBRApnZ0VCQUp1alNYYk5mcjJwK0NpZ3l0S3I1KzIrYUhJREZpdGltRnQzL1RBaXRWaXVWR3U2eXd4SmJ5TFQ2WVdGCnRVN25VVlNxa2NTSGNraHV4ZXVhYW9tTC9GTXpkaGE2ZE1leDYvZlFaYVk2aVl2djNJN2d6N3M2Z3BIUDVWbkMKbHRra1FoR1VmYm1qTXR1eUJ4cWYyaGxqWkNEdWUwOXQ0ak1zQWhXY05RYkVHTWdVdS8wZ0t1L1E2ay9rbG5MUQo4TzJwS200MzZZOFUwMXdndlMyT3NqeXBtK202aGtaQmtJOU5rZmRnMjFOUUhESVVSV095SHN4QnE2V0VjT3JaCndiTVRXQVRDckh3TWlGM0VEbVpXSEwyZFM0eDQ1ekVCOGErc004TlYzVllUdkxHL0g1cTYxTFB3czlJaU8rMmYKd202a1B5V0s2MEdocFI2ZGtwTWdLR0hDQkc0PQotLS0tLUVORCBDRVJUSUZJQ0FURS0tLS0tCg==" 
+    },
+    {
+      "ParameterKey": "MasterInstanceProfileName", 
+      "ParameterValue": "mark-sgrules-MasterInstanceProfile-1A9PNR33AT62J" 
+    },
+    {
+      "ParameterKey": "MasterInstanceType", 
+      "ParameterValue": "m5a.xlarge" 
+    },
+    {
+      "ParameterKey": "EbsEncryptionKey", 
+      "ParameterValue": "alias/denevetest" 
+    },
+    {
+      "ParameterKey": "AWSTagVSAD", 
+      "ParameterValue": "D4VV"  
+    },
+    {
+      "ParameterKey": "AWSTagUserid", 
+      "ParameterValue": "username"  
+    },
+    {
+      "ParameterKey": "AWSTagRole", 
+      "ParameterValue": "App"  
+    },
+    {
+      "ParameterKey": "AWSTagName", 
+      "ParameterValue": "OpenShift-Resource"  
+    },
+    {
+      "ParameterKey": "AWSTagNoStop", 
+      "ParameterValue": "true"  
+    }
+  ]

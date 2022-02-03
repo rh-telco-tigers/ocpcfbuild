@@ -13,6 +13,16 @@
     - [Create Install Config file](#create-install-config-file)
     - [Install Steps](#install-steps)
   - [Adding Additional Nodes to your cluster](#adding-additional-nodes-to-your-cluster)
+  - [Removing Worker Nodes](#removing-worker-nodes)
+  - [Replacing Worker Nodes](#replacing-worker-nodes)
+  - [Replacing Master Nodes](#replacing-master-nodes)
+    - [Identifying the leader node](#identifying-the-leader-node)
+    - [Clean Out old Node Entries](#clean-out-old-node-entries)
+      - [Cleanup old etcd entries](#cleanup-old-etcd-entries)
+      - [Cleanup old secrets](#cleanup-old-secrets)
+      - [Clean up AWS Target Groups](#clean-up-aws-target-groups)
+    - [Building a new master node](#building-a-new-master-node)
+    - [Updating AWS Loadbalancer TargetGroups](#updating-aws-loadbalancer-targetgroups)
   - [Cleanup](#cleanup)
 <!-- TOC -->
 
@@ -68,7 +78,7 @@ Leveraging the `install-config.yaml` template in the root directory of this repo
 Review the "networking" section and ensure that the IP address ranges do not conflict in your network. You will also need to update networking.machineNetwork.cidr to match the network you are deploying your machines on.
 
 *Proxy Config*
-If you need to use Proxy to access outside resources, we will need to update the install-config.yaml file with a proxy section as listed below: 
+If you need to use Proxy to access outside resources, we will need to update the install-config.yaml file with a proxy section as listed below:
 Add the following to the install-config.yaml
 
 ```
@@ -147,9 +157,9 @@ $ aws cloudformation create-stack --stack-name cfbuildint-sgroles \
 11. Place the bootstrap ignition file somewhere it can be accessed by the bootstrap node:
 ```
 $ cd ../install
-$ aws s3 mb s3://cfbuild-qjddd-infra
-$ aws s3 cp bootstrap.ign s3://cfbuild-qjddd-infra/bootstrap.ign --acl public-read
-$ aws s3 ls s3://cfbuild-qjddd-infra
+$ aws s3 mb s3://aws47-bp45h-infra
+$ aws s3 cp bootstrap.ign s3://aws47-bp45h-infra/bootstrap.ign --acl public-read
+$ aws s3 ls s3://aws47-bp45h-infra
 ```
 12. update bootstrap.json with new S3 bucket
 
@@ -259,6 +269,226 @@ aws cloudformation create-stack --stack-name <new stack name> \
 8. oc adm certificate approve <csr_name>
 9. repeat steps 7 and 8 again (you will need to approve certs 2x for each worker node you add)
 
+## Removing Worker Nodes
+
+To replace a worker node, add a new node following the instructions listed in [Adding Additional Nodes to your cluster](#adding-additional-nodes-to-your-cluster). Once your additional node(s) have been added to your cluster you can remove any old nodes you no longer want in your cluster.  Follow these steps:
+
+```
+$ oc get nodes
+$ oc adm cordon <node_name>
+$ oc adm drain <node_name> --force --delete-local-data --ignore-daemonsets
+$ oc delete node <node_name>
+```
+
+At this point you should terminate the EC2 instance that you removed from your cluster.
+
+## Replacing Worker Nodes
+
+To replace worker nodes within your cluster leverage the steps outlined in [Removing Worker Nodes](#removing-worker-nodes) followed by [Adding Additional Nodes to your Cluster](#adding-additional-nodes-to-your-cluster).
+
+## Replacing Master Nodes
+
+The following instructions will detail how to replace a failed Master node. If you are looking to replace a working, running node, you will need to delete that node first prior to starting these steps.
+
+**NOTE:**  You are effecting the redundancy and high availability of the cluster when you delete a master node. Be sure you know what you are doing before proceeding with these steps. **You have been warned**.
+
+Before proceeding with these steps it is recommended that you take a backup of your etcd database. See [Backing up etcd](https://docs.openshift.com/container-platform/4.8/backup_and_restore/control_plane_backup_and_restore/backing-up-etcd.html) for full steps.
+
+If your master node has already failed, you can jump to [Clean Out Old Node Entries](#clean-out-old-node-entries). If you are manually removing a working node, it is recommended that you first identify a non-leader node to remove, and only remove the leader node if you must.
+
+### Identifying the leader node
+
+To identify the leader and non-leader nodes, we will need to connect to one of the running etcd pods and use the *etcdctl* command to get the node status.
+
+```
+$ oc project openshift-etcd
+$ oc get po
+NAME                                READY   STATUS      RESTARTS   AGE
+etcd-ip-10-0-56-139                 4/4     Running     0          39h
+etcd-ip-10-0-56-14                  4/4     Running     0          39h
+etcd-ip-10-0-60-68                  4/4     Running     0          39h
+...
+revision-pruner-3-ip-10-0-56-14     0/1     Completed   0          39h
+revision-pruner-3-ip-10-0-60-68     0/1     Completed   0          39h
+$ oc rsh etcd-ip-10-0-56-139
+Defaulted container "etcdctl" out of: etcdctl, etcd, etcd-metrics, etcd-health-monitor, setup (init), etcd-ensure-env-vars (init), etcd-resources-copy (init)
+sh-4.4# etcdctl endpoint status -w table
++--------------------------+------------------+---------+---------+-----------+------------+-----------+------------+--------------------+--------+
+|         ENDPOINT         |        ID        | VERSION | DB SIZE | IS LEADER | IS LEARNER | RAFT TERM | RAFT INDEX | RAFT APPLIED INDEX | ERRORS |
++--------------------------+------------------+---------+---------+-----------+------------+-----------+------------+--------------------+--------+
+| https://10.0.56.139:2379 | f5d95a9b9bd5f0a1 |  3.4.14 |   86 MB |      true |      false |         6 |    1058737 |            1058737 |        |
+|  https://10.0.56.14:2379 |  83091a4e8a1b2f2 |  3.4.14 |   86 MB |     false |      false |         6 |    1058737 |            1058737 |        |
+|  https://10.0.60.68:2379 | 5735e4d448e73db3 |  3.4.14 |   86 MB |     false |      false |         6 |    1058737 |            1058737 |        |
++--------------------------+------------------+---------+---------+-----------+------------+-----------+------------+--------------------+--------+
+```
+
+In the above output 10.0.56.139 is the Leader.
+
+### Clean Out old Node Entries
+
+Start by deleting/terminating the node from AWS if it still exists.
+
+Now remove the failed node from the OpenShift cluster:
+
+```
+$ oc get nodes
+NAME             STATUS     ROLES    AGE   VERSION
+ip-10-0-56-139   Ready      master   40h   v1.21.6+c180a7c
+ip-10-0-56-14    NotReady   master   40h   v1.21.6+c180a7c
+ip-10-0-57-243   Ready      worker   39h   v1.21.6+c180a7c
+ip-10-0-60-68    Ready      master   40h   v1.21.6+c180a7c
+ip-10-0-61-216   Ready      worker   39h   v1.21.6+c180a7c
+ip-10-0-62-138   Ready      worker   39h   v1.21.6+c180a7c
+$ oc delete node/<node-name>
+$ oc get nodes
+NAME             STATUS   ROLES    AGE   VERSION
+ip-10-0-56-139   Ready    master   40h   v1.21.6+c180a7c
+ip-10-0-57-243   Ready    worker   40h   v1.21.6+c180a7c
+ip-10-0-60-68    Ready    master   40h   v1.21.6+c180a7c
+ip-10-0-61-216   Ready    worker   40h   v1.21.6+c180a7c
+ip-10-0-62-138   Ready    worker   40h   v1.21.6+c180a7c
+$ oc delete machine/<machine-name>
+```
+
+#### Cleanup old etcd entries
+
+We now need to cleanup and remove all old etcd entries for the failed node. In the examples below the node that was removed is called "ip-10-0-56-14", we will be removing the entries for this node. Be sure to update the commands for your specific cluster.
+
+```
+$ oc project openshift-etcd
+$ oc get po
+NAME                                READY   STATUS      RESTARTS   AGE
+etcd-ip-10-0-56-139                 4/4     Running     0          39h
+etcd-ip-10-0-60-68                  4/4     Running     0          39h
+...
+revision-pruner-3-ip-10-0-60-68     0/1     Completed   0          39h
+$ oc rsh etcd-ip-10-0-56-139
+$ etcdctl member list -w table
++------------------+---------+----------------+--------------------------+--------------------------+------------+
+|        ID        | STATUS  |      NAME      |        PEER ADDRS        |       CLIENT ADDRS       | IS LEARNER |
++------------------+---------+----------------+--------------------------+--------------------------+------------+
+|  83091a4e8a1b2f2 | started |  ip-10-0-56-14 |  https://10.0.56.14:2380 |  https://10.0.56.14:2379 |      false |
+| 5735e4d448e73db3 | started |  ip-10-0-60-68 |  https://10.0.60.68:2380 |  https://10.0.60.68:2379 |      false |
+| f5d95a9b9bd5f0a1 | started | ip-10-0-56-139 | https://10.0.56.139:2380 | https://10.0.56.139:2379 |      false |
++------------------+---------+----------------+--------------------------+--------------------------+------------+
+$ etcdctl member remove   83091a4e8a1b2f2
+$ etcdctl member list -w table
++------------------+---------+----------------+--------------------------+--------------------------+------------+
+|        ID        | STATUS  |      NAME      |        PEER ADDRS        |       CLIENT ADDRS       | IS LEARNER |
++------------------+---------+----------------+--------------------------+--------------------------+------------+
+| 5735e4d448e73db3 | started |  ip-10-0-60-68 |  https://10.0.60.68:2380 |  https://10.0.60.68:2379 |      false |
+| f5d95a9b9bd5f0a1 | started | ip-10-0-56-139 | https://10.0.56.139:2380 | https://10.0.56.139:2379 |      false |
++------------------+---------+----------------+--------------------------+--------------------------+------------+
+```
+
+**NOTE**: After deleting a master node, ETCD may be going through a re-election and you may get errors from the etcdctl commands, just re-run them until they work.
+
+#### Cleanup old secrets
+
+Now lets cleanup the secrets. Be sure to update the delete commands to reflect the names of your cluster's secrets
+
+```
+$ oc get secrets -n openshift-etcd | grep ip-10-0-56-14
+etcd-peer-ip-10-0-56-14               kubernetes.io/tls                     2      41h
+etcd-serving-ip-10-0-56-14            kubernetes.io/tls                     2      41h
+etcd-serving-metrics-ip-10-0-56-14    kubernetes.io/tls                     2      41h
+$ oc delete secret etcd-peer-ip-10-0-56-14 
+$ oc delete secret etcd-serving-ip-10-0-56-14
+$ oc delete secret etcd-serving-metrics-ip-10-0-56-14
+```
+
+#### Clean up AWS Target Groups
+
+You should remove the failed master node from the AWS Target groups at this time. The following target groups will need to be updated to have the failed node removed:
+
+- \<clusterName\>-Exter-\<random GUID\> port 6443
+- \<clusterName\>-Inter-\<random GUID\> port 22623
+- \<clusterName\>-Inter-\<random GUID\> port 6443
+
+### Building a new master node
+
+Using the **cftemplates\control_plane_single_node.json** file, update all the values in that document. You should be able to use your original "control-plane.json" file as a template. You will need to update the certificate that is in the file.
+
+First step is to get the new machineConfig signing certificate:
+
+1. get the value of "IgnitionLocation" from the cftemplates/control_plane_single_node.json file.
+2. run the following command updating the export command with the hostname and port from step one
+```
+$ export MCS=api-int.clusterDomain:22623
+$ echo "q" | openssl s_client -connect $MCS  -showcerts | awk '/-----BEGIN CERTIFICATE-----/,/-----END CERTIFICATE-----/' | base64 --wrap=0 > ./api-int.base64
+$ cat api-int.base64
+```
+3. update your cftemplates/control_plane_single_node.json file with the output from step 2. specifically you will want to update the base64 encoded string for "CertificateAuthorities"
+```
+},
+  {
+    "ParameterKey": "CertificateAuthorities", 
+    "ParameterValue": "data:text/plain;charset=utf-8;base64,<insert update string here>" 
+  },
+```
+
+After validating all the entries in your **cftemplates\control_plane_single_node.json**, run the following command to create a new master node (be sure to update the stack name to something that has not been used):
+
+```
+aws cloudformation create-stack --stack-name replacementMaster0 \
+     --template-body file://control_plane_single_node.yaml \
+     --parameters file://control_plane_single_node.json
+```
+
+The new master node should start to be deployed it will take 5-10 minutes for it to first attempt to join the cluster. You will not be able to proceed to the next step until it has started the cluster join process.
+
+1. log into your cluster with a user with cluster admin access
+2. oc get csr
+If you do not get any Pending csr requests, you may need to wait longer
+3. oc get csr -o name | xargs oc adm certificate approve
+4. repeat steps 7 and 8 again (you will need to approve certs 2x for each worker node you add)
+
+At this point, your new master node is built and the etcd quorum should start to rebuild on its own. This will take some time. We can validate the process is complete with the following command:
+
+```
+$ oc get pods -n openshift-etcd| grep -v etcd-quorum-guard|grep etcd
+etcd-ip-10-0-56-139                 4/4     Running     0          12m
+etcd-ip-10-0-60-68                  4/4     Running     0          11m
+etcd-ip-10-0-62-245                 4/4     Running     5          17m
+```
+
+NOTE:  During the etcd rebuild time you may experience Kubernetes API errors, this should be expected during the rebuild process.
+
+We can also double check the state of the etcd rebuild by connecting to the new etcd instance and running a few etcdctl commands:
+
+```
+$ oc project openshift-etcd
+$ oc get po
+NAME                                READY   STATUS      RESTARTS   AGE
+etcd-ip-10-0-56-139                 4/4     Running     0          39h
+etcd-ip-10-0-56-14                  4/4     Running     0          39h
+etcd-ip-10-0-62-245                 4/4     Running     5          17m
+...
+revision-pruner-3-ip-10-0-56-14     0/1     Completed   0          39h
+revision-pruner-3-ip-10-0-60-68     0/1     Completed   0          39h
+$ oc rsh etcd-ip-10-0-62-245
+Defaulted container "etcdctl" out of: etcdctl, etcd, etcd-metrics, etcd-health-monitor, setup (init), etcd-ensure-env-vars (init), etcd-resources-copy (init)
+sh-4.4# etcdctl endpoint status -w table
++--------------------------+------------------+---------+---------+-----------+------------+-----------+------------+--------------------+--------+
+|         ENDPOINT         |        ID        | VERSION | DB SIZE | IS LEADER | IS LEARNER | RAFT TERM | RAFT INDEX | RAFT APPLIED INDEX | ERRORS |
++--------------------------+------------------+---------+---------+-----------+------------+-----------+------------+--------------------+--------+
+| https://10.0.56.139:2379 | f5d95a9b9bd5f0a1 |  3.4.14 |   86 MB |     false |      false |       127 |    1098530 |            1098530 |        |
+|  https://10.0.60.68:2379 | 5735e4d448e73db3 |  3.4.14 |   86 MB |     false |      false |       127 |    1098530 |            1098530 |        |
+| https://10.0.62.245:2379 | bc83e15406fede8d |  3.4.14 |   86 MB |      true |      false |       127 |    1098530 |            1098530 |        |
++--------------------------+------------------+---------+---------+-----------+------------+-----------+------------+--------------------+--------+
+```
+
+### Updating AWS Loadbalancer TargetGroups
+
+At this point you will need to manually update target groups for you AWS Load Balancer. Log into your AWS console and update the following EC2 Target Groups:
+
+- \<clusterName\>-Exter-\<random GUID\> port 6443
+- \<clusterName\>-Inter-\<random GUID\> port 22623
+- \<clusterName\>-Inter-\<random GUID\> port 6443
+
+Be sure the old master node IP has been removed from the list, and add the new node's IP to the list.
+
+**NOTE:  DO NOT** replace additional master nodes, until the newly added node shows as active within the AWS TargetGroup. After replacing a master node, it may take some time for the kubeapi to settle, ensure ample time for the cluster to settle.
 
 ## Cleanup
 
