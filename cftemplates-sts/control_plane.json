@@ -1,0 +1,74 @@
+[
+    {
+      "ParameterKey": "InfrastructureName", 
+      "ParameterValue": "mycluster-<random_string>" 
+    },
+    {
+      "ParameterKey": "RhcosAmi", 
+      "ParameterValue": "ami-<random_string>" 
+    },
+    {
+      "ParameterKey": "AutoRegisterDNS", 
+      "ParameterValue": "no" 
+    },
+    {
+      "ParameterKey": "PrivateHostedZoneId", 
+      "ParameterValue": "<random_string>" 
+    },
+    {
+      "ParameterKey": "PrivateHostedZoneName", 
+      "ParameterValue": "mycluster.example.com" 
+    },
+    {
+      "ParameterKey": "Master0Subnet", 
+      "ParameterValue": "subnet-<random_string>" 
+    },
+    {
+      "ParameterKey": "Master1Subnet", 
+      "ParameterValue": "subnet-<random_string>" 
+    },
+    {
+      "ParameterKey": "Master2Subnet", 
+      "ParameterValue": "subnet-<random_string>" 
+    },
+    {
+      "ParameterKey": "MasterSecurityGroupId", 
+      "ParameterValue": "sg-<random_string>" 
+    },
+    {
+      "ParameterKey": "IgnitionLocation", 
+      "ParameterValue": "https://api-int.<cluster_name>.<domain_name>:22623/config/master" 
+    },
+    {
+      "ParameterKey": "CertificateAuthorities", 
+      "ParameterValue": "data:text/plain;charset=utf-8;base64,ABC...xYz==" 
+    },
+    {
+      "ParameterKey": "MasterInstanceProfileName", 
+      "ParameterValue": "<roles_stack>-MasterInstanceProfile-<random_string>" 
+    },
+    {
+      "ParameterKey": "MasterInstanceType", 
+      "ParameterValue": "m5.xlarge" 
+    },
+    {
+      "ParameterKey": "AutoRegisterELB", 
+      "ParameterValue": "no" 
+    },
+    {
+      "ParameterKey": "RegisterNlbIpTargetsLambdaArn", 
+      "ParameterValue": "arn:aws:lambda:<region>:<account_number>:function:<dns_stack_name>-RegisterNlbIpTargets-<random_string>" 
+    },
+    {
+      "ParameterKey": "ExternalApiTargetGroupArn", 
+      "ParameterValue": "arn:aws:elasticloadbalancing:<region>:<account_number>:targetgroup/<dns_stack_name>-Exter-<random_string>" 
+    },
+    {
+      "ParameterKey": "InternalApiTargetGroupArn", 
+      "ParameterValue": "arn:aws:elasticloadbalancing:<region>:<account_number>:targetgroup/<dns_stack_name>-Inter-<random_string>" 
+    },
+    {
+      "ParameterKey": "InternalServiceTargetGroupArn", 
+      "ParameterValue": "arn:aws:elasticloadbalancing:<region>:<account_number>:targetgroup/<dns_stack_name>-Inter-<random_string>" 
+    }
+  ]
