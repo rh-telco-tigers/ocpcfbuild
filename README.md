@@ -284,7 +284,15 @@ At this point you should terminate the EC2 instance that you removed from your c
 
 ## Replacing Worker Nodes
 
-To replace worker nodes within your cluster leverage the steps outlined in [Removing Worker Nodes](#removing-worker-nodes) followed by [Adding Additional Nodes to your Cluster](#adding-additional-nodes-to-your-cluster).
+To replace worker nodes within your cluster leverage the steps outlined in [Adding Additional Nodes to your Cluster](#adding-additional-nodes-to-your-cluster) followed by [Removing Worker Nodes](#removing-worker-nodes).
+
+**Manually UPDATE the "ingress" loadbalancer and ADD the worker nodes created**
+Ensure that as you replace the worker nodes you update the AWS Loadbalancer instance adding and removing the worker nodes as you proceed. If you do not do this, you will loose access to the console and all applications hosted at \*.apps.\cluster name\>
+
+Log into your AWS console and update the following EC2 Target Groups adding the new node to the target group.
+
+- \<clusterName\>-ingress-\<random GUID\> port 443
+- \<clusterName\>-ingress-\<random GUID\> port 80
 
 ## Replacing Master Nodes
 
